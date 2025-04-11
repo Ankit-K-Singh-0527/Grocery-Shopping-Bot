@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Smart Shopping List Generator</title>
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .list-item {
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+            color: #333; /* Dark gray text */
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .list-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .vibrant-background {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4, #a18cd1, #fbc2eb, #ffdde1);
+            background-size: 300% 300%;
+            animation: gradientShift 8s infinite;
+        }
+
+        .glow-button {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .glow-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 99, 132, 0.6);
+        }
+
+        .animated-message {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen vibrant-background flex flex-col items-center text-white">
+    <!-- Header -->
+    <header class="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white py-4 px-6 flex justify-between items-center shadow-lg">
+        <h1 class="text-2xl md:text-3xl font-bold">🛒 Smart Shopping List Generator</h1>
+        <button onclick="goBack()" class="bg-white text-purple-600 px-4 py-2 rounded-full shadow hover:bg-gray-200">
+            Back
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-6 w-full max-w-3xl">
+        <!-- Input Section -->
+        <div class="bg-white p-6 rounded-lg shadow-lg text-black space-y-4">
+            <h2 class="text-xl font-bold text-center text-pink-500">Enter a Recipe Name</h2>
+            <input id="inputRecipe" type="text" placeholder="Type a recipe name (e.g., Pasta)"
+                class="w-full p-3 border border-gray-300 rounded-lg bg-gradient-to-r from-purple-200 via-pink-200 to-red-200 text-black focus:outline-none focus:ring-4 focus:ring-purple-300">
+            <button id="generateButton"
+                class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full glow-button shadow-lg hover:from-pink-500 hover:to-purple-500 transition">
+                Generate Shopping List
+            </button>
+        </div>
+
+        <!-- Message Section -->
+        <div id="messageSection" class="mt-4 hidden text-center">
+            <p id="messageText" class="animated-message text-lg font-semibold"></p>
+        </div>
+
+        <!-- Shopping List Section -->
+        <div id="shoppingListSection" class="mt-6 space-y-4 hidden">
+            <h3 class="text-lg font-semibold text-center text-purple-400">Your Smart Shopping List</h3>
+            <ul id="shoppingList" class="space-y-2"></ul>
+            <button id="clearButton"
+                class="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-full glow-button shadow-lg hover:from-pink-600 hover:to-red-600 transition">
+                Clear List
+            </button>
+        </div>
+    </main>
+    <script src="func.js"></script>
+</body>
+</html>

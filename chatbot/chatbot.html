@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Vibrant Health Chatbot</title>
+    <style>
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        .animated-gradient {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4, #a18cd1, #fbc2eb, #ffdde1);
+            background-size: 300% 300%;
+            animation: gradientShift 8s infinite;
+        }
+
+        .floating-bubble {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #ff9a9e, #fad0c4);
+            border-radius: 50%;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 4px 15px rgba(255, 154, 158, 0.75);
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide-left {
+            animation: slideInLeft 0.5s ease-out;
+        }
+
+        .slide-right {
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+        }
+
+        .bot-message {
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 flex flex-col text-white relative">
+    <!-- Floating Animated Bubble -->
+    <div class="floating-bubble"></div>
+
+    <!-- Chatbot Header -->
+    <header class="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white py-4 px-6 flex justify-between items-center shadow-lg relative z-10">
+        <h1 class="text-3xl font-bold">🌟 Vibrant Health Chatbot</h1>
+        <button onclick="goBack()" class="bg-white text-purple-600 px-4 py-2 rounded-full shadow hover:bg-gray-200">
+            Back
+        </button>
+    </header>
+
+    <!-- Chatbot Content -->
+    <main class="flex-grow p-6 flex flex-col space-y-4">
+        <!-- Chat Display Window -->
+        <div id="chatWindow" class="flex-grow animated-gradient text-black rounded-lg p-4 shadow-lg overflow-y-auto h-[70vh] flex flex-col space-y-4">
+            <!-- Initial Bot Message -->
+            <div class="message slide-left bot-message p-3 rounded-lg inline-block max-w-xs text-white shadow-lg">
+                Hi there! I’m your health assistant. Ask me about any product, and I’ll provide details about its health benefits.
+            </div>
+        </div>
+
+        <!-- Chat Input Section -->
+        <div class="flex space-x-4">
+            <input id="chatInput" type="text" placeholder="Type your question..."
+                class="flex-grow px-4 py-3 border border-gray-300 rounded-lg bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 text-white focus:outline-none focus:ring-4 focus:ring-purple-300">
+            <button id="sendButton"
+                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full shadow-lg hover:from-pink-500 hover:to-purple-500 transition">
+                Send
+            </button>
+        </div>
+    </main>
+    <script src="action.js"></script>
+</body>
+</html>

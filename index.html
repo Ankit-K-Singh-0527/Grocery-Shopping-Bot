@@ -5,79 +5,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <title>Grocery Shopping Bot</title>
+    <style>
+        /* Floating animation for grocery items */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+         /* Add animation to the image */
+    .animated-image {
+        animation: bounce 2s infinite ease-in-out, hueRotate 5s infinite linear;
+    }
+
+    /* Bounce animation */
+    @keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    /* Hue rotation animation for dynamic color change */
+    @keyframes hueRotate {
+        0% {
+            filter: hue-rotate(0deg);
+        }
+        100% {
+            filter: hue-rotate(360deg);
+        }
+    }
+    </style>
 </head>
-<body >
-    <!--Profile Section-->
-    <div class="relative flex justify-end  items-center">
-        <!--Cart container and animation-->
-    <a href="cart.html"  class="cursor-pointer relative group">
-    <div id="cart-container" class="w-12 h-12 flex items-center justify-center cursor-pointer">
-        <!--Lottie cart animation will be uploaded here-->
-    </div> 
+<body class="min-h-screen bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 animate-[gradient-x_8s_ease-in-out_infinite] flex flex-col text-white">
+    <!-- Navbar Section -->
+    <div class="relative flex justify-end items-center w-full px-4 py-4">
+        
+        <!-- Ingredient Generator Image -->
+    <a href="ingredient Gen/ingred.html" class="cursor-pointer relative group mx-4">
+        <div id="ingredient-image-container" class="w-16 h-16 flex items-center justify-center cursor-pointer group-hover:scale-110 transition-transform duration-300">
+            <img src="./resource/list.png" alt="Ingredient Generator" class="w-full h-full object-contain animated-image">
+        </div>
     </a>
-    <!--Profile Image-->
-            <img src="./settings-6380866_640.png" alt="Profile" id="profileImage"
-             class="h-10 w-10 rounded-full  cursor-pointer  items-center space-x-4" 
-             onclick="toggleSettingsMenu()">
-        
-        <div id="themeButton" class="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg hidden z-20">
-            <button onclick="toggleThemeDropdown()" 
-            class=" w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200">
-            Theme
-        </button>
-        </div>
-        <!-- Settings Dropdown -->
-        <div id="settingsDropdown" class="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg hidden z-20">
-            
-            
-            <!-- <button class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200">Profile</button> -->
-            <button onclick="toggleSettings()" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200">Setting</button>
+        <!-- Cart icon -->
+        <a href="cart.html" class="cursor-pointer relative group">
+            <div id="cart-container" class="w-12 h-12 flex items-center justify-center cursor-pointer group-hover:scale-110 transition-transform duration-300">
+                
+            </div>
+        </a>
+            <!-- Chatbot icon -->
+         <a href="chatbot/chatbot.html" class="cursor-pointer relative group">
+            <div id="chatbot" class="w-12 h-12 flex items-center justify-center cursor-pointer group-hover:scale-110 transition-transform duration-300">
+                
+            </div>
+        </a>
+    </div>
+
+    <!-- Main Content Section -->
+    <div class="relative w-full flex-grow bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 animate-[gradient-y_6s_ease-in-out_infinite]">
+        <!-- Left Animated Grocery Items -->
+        <div class="absolute left-0 top-0 h-full flex flex-col items-center justify-between py-8 animate-[float_4s_ease-in-out_infinite]">
+            <div class="flex flex-col items-center">
+                <img src="./resource/grocerybag.png" alt="Grocery Bag" class="w-16 h-16">
+                <span class="text-white mt-2 text-sm font-semibold">Grocery Bag</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="./resource/apple.png" alt="Apple" class="w-14 h-14">
+                <span class="text-white mt-2 text-sm font-semibold">Apple</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="./resource/bread.png" alt="Bread" class="w-14 h-14">
+                <span class="text-white mt-2 text-sm font-semibold">Bread</span>
+            </div>
         </div>
 
-        <!-- Theme Dropdown (Nested Inside Settings) -->
-        <div id="themeDropdown" class="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg hidden z-20">
-            <button onclick="setTheme('light')" 
-                class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200">
-                Light Mode
-            </button>
-            <button onclick="setTheme('dark')" 
-                class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-200">
-                Dark Mode
+        <!-- Right Animated Grocery Items -->
+        <div class="absolute right-0 top-0 h-full flex flex-col items-center justify-between py-8 animate-[float_4s_ease-in-out_infinite] delay-200">
+            <div class="flex flex-col items-center">
+                <img src="./resource/milk.png" alt="Milk" class="w-16 h-16">
+                <span class="text-white mt-2 text-sm font-semibold">Milk</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="./resource/cheese.png" alt="Cheese" class="w-14 h-14">
+                <span class="text-white mt-2 text-sm font-semibold">Cheese</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="./resource/carrot.png" alt="Carrot" class="w-14 h-14">
+                <span class="text-white mt-2 text-sm font-semibold">Carrot</span>
+            </div>
+        </div>
+
+        <!-- Grocery Shopping Box -->
+        <div class="content-box max-w-4xl mx-auto bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 animate-[gradient-x_6s_ease-in-out_infinite] text-white rounded-lg shadow-2xl p-8 mt-16">
+            <h1 class="text-4xl font-bold text-center text-yellow-300">Grocery Shopping Bot</h1>
+            <div class="mt-8">
+                <label for="item" class="block text-lg font-medium text-white">Enter Grocery Item:</label>
+                <input id="item" type="text" placeholder="e.g., Milk, Bread, Eggs" 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg mt-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white placeholder-white focus:outline-none focus:ring-4 focus:ring-purple-300 transition duration-200 hover:scale-105 hover:shadow-lg">
+            </div>
+            <div class="mt-4 flex justify-between">
+                <button onclick="fetchAndRenderGrocery()" 
+                    class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 hover:scale-105 transition-transform duration-200">Search</button>
+                <button onclick="clearResults()" 
+                    class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 hover:scale-105 transition-transform duration-200">Clear</button>
+            </div>
+            <div id="result" class="mt-6"></div>
+            <button onclick="getPersonalizedListFromAPI()" 
+                class="bg-gradient-to-r from-green-400 via-blue-500 to-indigo-500 text-white px-6 py-3 rounded-lg hover:scale-105 transition-transform mt-6 w-full">
+                Get Personalized List
             </button>
         </div>
     </div>
     
-      
-    <!--Profile Section ended-->
-    <div class="content-box bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="content-box max-w-4xl w-full bg-white rounded-lg shadow-lg p-8">
-        <h1 class=" text-4xl font-bold text-center text-blue-600">Grocery Shopping Bot</h1>
-        
-        <div class=" mt-8">
-            <label for="item" class="block text-lg font-medium text-gray-700">Enter Grocery Item:</label>
-            <input id="item" type="text" placeholder="e.g., Milk, Bread, Eggs" 
-                class="w-full px-4 py-2 border rounded-lg mt-2 focus:ring-2 focus:ring-blue-400 
-                bg-white text-black placeholder-gray-500
-                ">
-        </div>
-
-        <div class="content-box mt-4 flex justify-between">
-            <button onclick="fetchAndRenderGrocery()" 
-                class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">Search</button>
-            <button onclick="clearResults()" 
-                class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition">Clear</button>
-        </div>
-        
-        
-        <div id="result" class="mt-6"></div>
-        <button onclick="getPersonalizedListFromAPI()" 
-            class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
-            Get Personalized List
-        </button>
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed top-0 left-0 w-full flex justify-center z-50 pointer-events-none"></div>
     
-  
-    </div>
-</div>
+    <!-- Scroll-to-Top Button -->
+    <button onclick="scrollToTop()" 
+        class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-4 rounded-full shadow-lg transition hover:scale-110">
+        ⬆️
+    </button>
     <script src="script.js"></script>
 </body>
 </html>
