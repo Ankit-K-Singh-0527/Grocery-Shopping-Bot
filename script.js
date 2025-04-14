@@ -428,19 +428,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
     });
 } );
 
-// ✅ Function to initialize after the script is loaded
-window.addEventListener('DOMContentLoaded', ()=>{
-    loadLottie(() => { 
-        const cartContainer = document.getElementById('chatbot');
-        lottie.loadAnimation({
-            container : cartContainer,
-            render: 'svg',
-            loop: true,
-            autoplay: true,
-            path: './resource/chatbot.json'
-        });
-    });
-} );
+
 // ✅ Added the Enter key event listener to the input field
 document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('item').addEventListener('keydown', function(event) {
