@@ -1,6 +1,5 @@
 const { Pool } = require('pg'); // PostgreSQL client
 const bcrypt = require('bcrypt'); // For password hashing
-const { NetlifyFunction } = require('@netlify/functions'); // Netlify serverless function handler
 
 // Configure PostgreSQL connection pool
 const pool = new Pool({
