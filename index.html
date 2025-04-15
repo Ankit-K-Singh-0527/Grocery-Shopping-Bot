@@ -45,25 +45,21 @@
     const modalMessage = document.getElementById('modal-message');
     const modalClose = document.getElementById('modal-close');
 
-    // Close modal on button click
     modalClose.addEventListener('click', () => {
       modal.classList.add('hidden');
     });
 
-    // Close modal on "Escape" key press
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         modal.classList.add('hidden');
       }
     });
 
-    // Show the modal with a message
     function showModal(message) {
       modalMessage.textContent = message;
       modal.classList.remove('hidden');
     }
 
-    // Handle form submission
     document.getElementById('signup-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -83,17 +79,17 @@
       }
 
       try {
-        const response = await fetch('/.netlify/functions/sign-up', { // Netlify serverless function
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-      });
+        const response = await fetch('/.netlify/functions/backend/sign-up', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password }),
+        });
 
         const result = await response.json();
 
         if (response.ok) {
           alert(result.message);
-          window.location.href = 'signin.html'; // Redirect to sign-in page
+          window.location.href = 'signin.html';
         } else {
           showModal(`Error: ${result.error}`);
         }

@@ -25,41 +25,15 @@
     </p>
   </div>
 
-  <!-- Modal -->
-  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-      <h3 id="modal-title" class="text-lg font-semibold text-gray-800 mb-4">Validation Error</h3>
-      <p id="modal-message" class="text-sm text-gray-600"></p>
-      <button id="modal-close" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-        Close
-      </button>
-    </div>
-  </div>
-
   <script>
     const modal = document.getElementById('modal');
     const modalMessage = document.getElementById('modal-message');
     const modalClose = document.getElementById('modal-close');
 
-    // Close modal on button click
     modalClose.addEventListener('click', () => {
       modal.classList.add('hidden');
     });
 
-    // Close modal on "Escape" key press
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        modal.classList.add('hidden');
-      }
-    });
-
-    // Show the modal with a message
-    function showModal(message) {
-      modalMessage.textContent = message;
-      modal.classList.remove('hidden');
-    }
-
-    // Handle form submission
     document.getElementById('signin-form').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -72,23 +46,21 @@
       }
 
       try {
-        const response = await fetch('/.netlify/functions/sign-in', { // Netlify serverless function
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        const response = await fetch('/.netlify/functions/backend/sign-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
         });
 
         if (response.ok) {
-          // Redirect to home.html on successful login
           window.location.href = 'home.html';
         } else {
-          // Handle invalid credentials or other errors
           const errorMsg = await response.json();
           showModal(`Error: ${errorMsg.error}`);
         }
       } catch (error) {
         console.error('Error:', error);
-        showModal('An unexpected error occurred. Please try again later.');
+        showModal('An unexpected error occurred.');
       }
     });
   </script>
