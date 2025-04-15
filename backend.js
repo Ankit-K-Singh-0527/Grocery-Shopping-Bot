@@ -1,101 +1,103 @@
-const express = require('express'); // Import Express for server creation
-const { Pool } = require('pg'); // Import pg for PostgreSQL connection
-const bcrypt = require('bcrypt'); // Import bcrypt for password hashing
-const cors = require('cors'); // Import cors for cross-origin requests
-require('dotenv').config(); // Load environment variables from .env file
+const { Pool } = require('pg'); // PostgreSQL client
+const bcrypt = require('bcrypt'); // For password hashing
+const { NetlifyFunction } = require('@netlify/functions'); // Netlify serverless function handler
 
-// Initialize Express app
-const app = express();
-
-// Middleware to parse JSON request bodies
-app.use(express.json());
-
-// Enable CORS for Netlify frontend
-app.use(
-  cors({
-    origin: 'https://groceryshoppingbot.netlify.app', // Your Netlify frontend URL
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
-  })
-);
-
-// Configure PostgreSQL connection pool using environment variables
+// Configure PostgreSQL connection pool
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Connection string from environment variable
-  ssl: { rejectUnauthorized: false }, // Ensure SSL is used for Neon
+  connectionString: process.env.DATABASE_URL, // Get DB connection string from environment variable
+  ssl: { rejectUnauthorized: false }, // Ensure SSL is enabled for Neon
 });
 
-// API Route: Sign Up (POST /sign-up)
-app.post('/sign-up', async (req, res) => {
-  const { name, email, password } = req.body; // Extract user details from request body
+// Helper to handle responses
+function handleResponse(statusCode, message) {
+  return {
+    statusCode,
+    body: JSON.stringify(message),
+  };
+}
 
-  // Validate inputs
+// Function: Sign Up
+const signUp = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return handleResponse(405, { error: 'Method not allowed' });
+  }
+
+  const { name, email, password } = JSON.parse(event.body);
+
+  // Input validation
   if (!name || !email || !password) {
-    return res.status(400).json({ error: 'All fields are required' });
+    return handleResponse(400, { error: 'All fields are required' });
   }
   if (!/^\S+@\S+\.\S+$/.test(email)) {
-    return res.status(400).json({ error: 'Invalid email format' });
+    return handleResponse(400, { error: 'Invalid email format' });
   }
   if (password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    return handleResponse(400, { error: 'Password must be at least 6 characters long' });
   }
 
   try {
-    // Hash the password before saving it to the database
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert the user into the PostgreSQL database
+    // Insert user into the database
     const query = 'INSERT INTO users (name, email, password) VALUES ($1, $2, $3)';
     await pool.query(query, [name, email, hashedPassword]);
 
-    res.status(200).json({ message: 'User registered successfully' }); // Success message
+    return handleResponse(200, { message: 'User registered successfully' });
   } catch (err) {
     console.error('Error during sign-up:', err);
     if (err.code === '23505') {
-      // Unique violation (email already exists)
-      res.status(400).json({ error: 'Email already registered' });
-    } else {
-      res.status(500).json({ error: 'Error saving user' });
+      return handleResponse(400, { error: 'Email already registered' });
     }
+    return handleResponse(500, { error: 'Error saving user' });
   }
-});
+};
 
-// API Route: Sign In (POST /sign-in)
-app.post('/sign-in', async (req, res) => {
-  const { email, password } = req.body; // Extract login details from request body
+// Function: Sign In
+const signIn = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return handleResponse(405, { error: 'Method not allowed' });
+  }
 
-  // Validate inputs
+  const { email, password } = JSON.parse(event.body);
+
+  // Input validation
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
+    return handleResponse(400, { error: 'Email and password are required' });
   }
 
   try {
-    // Query the database for the user by email
+    // Query database for the user
     const query = 'SELECT * FROM users WHERE email = $1';
     const { rows } = await pool.query(query, [email]);
 
     if (rows.length === 0) {
-      return res.status(400).json({ error: 'Invalid email or password' }); // User not found
+      return handleResponse(400, { error: 'Invalid email or password' });
     }
 
     const user = rows[0];
 
-    // Compare the provided password with the hashed password in the database
+    // Compare passwords
     const isPasswordMatch = await bcrypt.compare(password, user.password);
 
     if (isPasswordMatch) {
-      res.status(200).json({ message: 'Login successful' }); // Success message
+      return handleResponse(200, { message: 'Login successful' });
     } else {
-      res.status(400).json({ error: 'Invalid email or password' }); // Password mismatch
+      return handleResponse(400, { error: 'Invalid email or password' });
     }
   } catch (err) {
     console.error('Error during sign-in:', err);
-    res.status(500).json({ error: 'Error during sign-in' });
+    return handleResponse(500, { error: 'Error during sign-in' });
   }
-});
+};
 
-// Start the server
-const PORT = process.env.PORT || 3000; // Use port 3000 or the environment's port
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Export Netlify functions
+exports.handler = async (event, context) => {
+  if (event.path.includes('/sign-up')) {
+    return await signUp(event);
+  } else if (event.path.includes('/sign-in')) {
+    return await signIn(event);
+  } else {
+    return handleResponse(404, { error: 'Not Found' });
+  }
+};

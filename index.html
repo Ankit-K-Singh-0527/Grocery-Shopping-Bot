@@ -89,16 +89,17 @@
         body: JSON.stringify({ name, email, password }),
       });
 
+        const result = await response.json();
+
         if (response.ok) {
-          alert('User registered successfully');
-          window.location.href = 'signin.html'; // Redirect to the sign-in page
+          alert(result.message);
+          window.location.href = 'signin.html'; // Redirect to sign-in page
         } else {
-          const errorMsg = await response.text();
-          showModal(`Error: ${errorMsg}`);
+          showModal(`Error: ${result.error}`);
         }
       } catch (error) {
         console.error('Error:', error);
-        showModal('An unexpected error occurred');
+        showModal('An unexpected error occurred.');
       }
     });
   </script>
