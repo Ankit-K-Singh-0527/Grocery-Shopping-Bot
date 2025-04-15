@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 min-h-screen flex items-center justify-center">
+  <div class="relative bg-gradient-to-r from-white via-indigo-100 to-white rounded-lg shadow-lg p-8 w-full max-w-md">
+    <h2 class="text-2xl font-bold text-center mb-4 text-gray-700">Create Your Account</h2>
+    <form id="signup-form" class="space-y-4">
+      <input type="text" name="name" id="name" placeholder="Full Name" 
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-indigo-500" required>
+      <input type="email" name="email" id="email" placeholder="Email" 
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-indigo-500" required>
+      <input type="password" name="password" id="password" placeholder="Password" 
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-indigo-500" required>
+      <input type="password" name="confirm-password" id="confirm-password" placeholder="Confirm Password" 
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-indigo-500" required>
+      <button type="button" id="signup-btn" 
+        class="w-full bg-indigo-500 text-white py-2 rounded-lg font-semibold hover:bg-indigo-600 transition transform hover:scale-105">
+        Sign Up
+      </button>
+    </form>
+    <p class="text-center text-sm text-gray-600 mt-4">
+      Already part of the family? 
+      <a href="signin.html" class="text-indigo-500 hover:underline">Sign In</a>
+    </p>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+      <h3 id="modal-title" class="text-lg font-semibold text-gray-800 mb-4">Validation Error</h3>
+      <p id="modal-message" class="text-sm text-gray-600"></p>
+      <button id="modal-close" class="mt-4 bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('modal');
+    const modalMessage = document.getElementById('modal-message');
+    const modalClose = document.getElementById('modal-close');
+
+    document.getElementById('signup-btn').addEventListener('click', () => {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const confirmPassword = document.getElementById('confirm-password').value.trim();
+
+      if (!name || !email || !password || !confirmPassword) {
+        showModal('Please fill in all the fields.');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showModal('Passwords do not match.');
+        return;
+      }
+
+      // Redirect to the Sign-In page if validation passes
+      window.location.href = 'signin.html';
+    });
+
+    modalClose.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    function showModal(message) {
+      modalMessage.textContent = message;
+      modal.classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
