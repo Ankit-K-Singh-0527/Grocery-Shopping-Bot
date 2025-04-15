@@ -18,7 +18,7 @@
         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-indigo-500" required>
       <input type="password" name="confirm-password" id="confirm-password" placeholder="Confirm Password" 
         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-indigo-500" required>
-      <button type="button" id="signup-btn" 
+      <button type="submit" 
         class="w-full bg-indigo-500 text-white py-2 rounded-lg font-semibold hover:bg-indigo-600 transition transform hover:scale-105">
         Sign Up
       </button>
@@ -45,7 +45,28 @@
     const modalMessage = document.getElementById('modal-message');
     const modalClose = document.getElementById('modal-close');
 
-    document.getElementById('signup-btn').addEventListener('click', () => {
+    // Close modal on button click
+    modalClose.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    // Close modal on "Escape" key press
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        modal.classList.add('hidden');
+      }
+    });
+
+    // Show the modal with a message
+    function showModal(message) {
+      modalMessage.textContent = message;
+      modal.classList.remove('hidden');
+    }
+
+    // Handle form submission
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
@@ -61,18 +82,25 @@
         return;
       }
 
-      // Redirect to the Sign-In page if validation passes
-      window.location.href = 'signin.html';
-    });
+      try {
+        const response = await fetch('/sign-up', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password }),
+        });
 
-    modalClose.addEventListener('click', () => {
-      modal.classList.add('hidden');
+        if (response.ok) {
+          alert('User registered successfully');
+          window.location.href = 'signin.html'; // Redirect to the sign-in page
+        } else {
+          const errorMsg = await response.text();
+          showModal(`Error: ${errorMsg}`);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showModal('An unexpected error occurred');
+      }
     });
-
-    function showModal(message) {
-      modalMessage.textContent = message;
-      modal.classList.remove('hidden');
-    }
   </script>
 </body>
 </html>

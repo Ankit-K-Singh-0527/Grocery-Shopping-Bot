@@ -14,7 +14,7 @@
         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500" required>
       <input type="password" name="password" id="password" placeholder="Password" 
         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500" required>
-      <button type="button" id="signin-btn" 
+      <button type="submit" 
         class="w-full bg-blue-500 text-white py-2 rounded-lg font-semibold hover:bg-blue-600 transition transform hover:scale-105">
         Sign In
       </button>
@@ -41,7 +41,28 @@
     const modalMessage = document.getElementById('modal-message');
     const modalClose = document.getElementById('modal-close');
 
-    document.getElementById('signin-btn').addEventListener('click', () => {
+    // Close modal on button click
+    modalClose.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    // Close modal on "Escape" key press
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        modal.classList.add('hidden');
+      }
+    });
+
+    // Show the modal with a message
+    function showModal(message) {
+      modalMessage.textContent = message;
+      modal.classList.remove('hidden');
+    }
+
+    // Handle form submission
+    document.getElementById('signin-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
 
@@ -50,18 +71,26 @@
         return;
       }
 
-      // Redirect to the Index page if validation passes
-      window.location.href = 'home.html';
-    });
+      try {
+        const response = await fetch('/sign-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
 
-    modalClose.addEventListener('click', () => {
-      modal.classList.add('hidden');
+        if (response.ok) {
+          // Redirect to home.html on successful login
+          window.location.href = 'home.html';
+        } else {
+          // Handle invalid credentials or other errors
+          const errorMsg = await response.text();
+          showModal(`Error: ${errorMsg}`);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showModal('An unexpected error occurred. Please try again later.');
+      }
     });
-
-    function showModal(message) {
-      modalMessage.textContent = message;
-      modal.classList.remove('hidden');
-    }
   </script>
 </body>
 </html>
