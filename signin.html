@@ -25,17 +25,32 @@
     </p>
   </div>
 
-  <script>
-    const modal = document.getElementById('modal');
-    const modalMessage = document.getElementById('modal-message');
-    const modalClose = document.getElementById('modal-close');
+  <!-- Modal for displaying messages -->
+  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+      <p id="modal-message" class="text-center text-gray-700"></p>
+      <button id="modal-close" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Close</button>
+    </div>
+  </div>
 
-    modalClose.addEventListener('click', () => {
+  <script>
+    // Function to show modal messages
+    function showModal(message) {
+      const modal = document.getElementById('modal');
+      const modalMessage = document.getElementById('modal-message');
+      modalMessage.textContent = message;
+      modal.classList.remove('hidden');
+    }
+
+    // Close modal logic
+    document.getElementById('modal-close').addEventListener('click', () => {
+      const modal = document.getElementById('modal');
       modal.classList.add('hidden');
     });
 
+    // Sign-in form submission logic
     document.getElementById('signin-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
+      e.preventDefault(); // Prevent the default form submission
 
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
@@ -46,21 +61,25 @@
       }
 
       try {
+        // Make a POST request to the backend for sign-in
         const response = await fetch('/.netlify/functions/backend/sign-in', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
         });
 
+        const result = await response.json();
+
         if (response.ok) {
+          // Redirect to home.html on successful login
           window.location.href = 'home.html';
         } else {
-          const errorMsg = await response.json();
-          showModal(`Error: ${errorMsg.error}`);
+          // Show error message from the backend
+          showModal(`Error: ${result.error}`);
         }
       } catch (error) {
-        console.error('Error:', error);
-        showModal('An unexpected error occurred.');
+        console.error('Error during sign-in:', error);
+        showModal('An unexpected error occurred. Please try again later.');
       }
     });
   </script>
