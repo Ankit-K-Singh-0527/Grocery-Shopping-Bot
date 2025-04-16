@@ -1,19 +1,10 @@
-
-console.log('DATABASE_URL:', process.env.DATABASE_URL);
 const { Pool } = require('pg'); // PostgreSQL client
-const { URL } = require('url');
-try {
-  const dbUrl = new URL(process.env.DATABASE_URL);
-  console.log('Database Hostname:', dbUrl.hostname);
-} catch (err) {
-  console.error('Failed to parse DATABASE_URL:', err);
-}
 const bcrypt = require('bcrypt'); // For password hashing
 
-// Configure PostgreSQL connection pool
+// Configure PostgreSQL connection pool with Neon's External Database URL
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Get DB connection string from environment variable
-  ssl: { rejectUnauthorized: false }, // Ensure SSL is enabled for Neon
+  connectionString: "postgresql://neondb_owner:npg_DAPek9F8viVY@ep-little-boat-a4nzyxm6-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require",
+  ssl: { rejectUnauthorized: false }, // Neon requires SSL
 });
 
 // Helper to handle responses
