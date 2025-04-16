@@ -1,4 +1,13 @@
+
+console.log('DATABASE_URL:', process.env.DATABASE_URL);
 const { Pool } = require('pg'); // PostgreSQL client
+const { URL } = require('url');
+try {
+  const dbUrl = new URL(process.env.DATABASE_URL);
+  console.log('Database Hostname:', dbUrl.hostname);
+} catch (err) {
+  console.error('Failed to parse DATABASE_URL:', err);
+}
 const bcrypt = require('bcrypt'); // For password hashing
 
 // Configure PostgreSQL connection pool
