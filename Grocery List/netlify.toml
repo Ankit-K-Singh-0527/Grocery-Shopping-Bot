@@ -1,5 +1,5 @@
 [build]
-  publish = "grocery-list/public"
+  publish = "public"
   functions = "netlify/functions"
 
 [[redirects]]
