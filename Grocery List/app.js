@@ -3,10 +3,12 @@ const bodyParser = require("body-parser");
 const { Pool } = require("pg");
 
 // Use PG_CONNECTION_STRING from environment variables.
-// Netlify will inject the connection string for all deployment types.
+// Netlify should inject this variable in all environments.
 const connectionString =
   process.env.PG_CONNECTION_STRING ||
   "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
+
+console.log("Using connection string:", connectionString); // Debug: Remove in production
 
 const pool = new Pool({ connectionString });
 
@@ -15,40 +17,48 @@ const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
+// Helper function to log errors with detailed info.
+const logError = (context, err) => {
+  console.error(`Error in ${context}:`, err.message);
+  console.error(err.stack);
+};
+
 /*
   Endpoint: /generate-code
-  Generates a unique user code by iterating and checking against the database.
-  Debugging logs have been added to determine if there is an error with the database query or 
-  a potential infinite loop.
+  Generates a unique user code. Added extra logging of each attempt.
 */
 app.get("/generate-code", async (req, res) => {
   try {
     let code = "";
-    let maxAttempts = 10; // Set a limit to avoid infinite loops.
+    const maxAttempts = 10;
     let attempts = 0;
     
     while (attempts < maxAttempts) {
       code = "user" + (Math.floor(Math.random() * 900) + 100);
-      console.log(`Attempt ${attempts + 1}: Checking code ${code}`);
-      
-      const checkQuery = "SELECT * FROM grocery_list WHERE user_code = $1";
-      const result = await pool.query(checkQuery, [code]);
-      
-      if (result.rowCount === 0) {
-        console.log("Unique code found:", code);
-        break;
+      console.log(`Attempt ${attempts + 1}: Trying code ${code}`);
+      try {
+        const checkQuery = "SELECT * FROM grocery_list WHERE user_code = $1";
+        const result = await pool.query(checkQuery, [code]);
+        console.log(`Code ${code} checked, row count: ${result.rowCount}`);
+        if (result.rowCount === 0) {
+          console.log("Unique code found:", code);
+          break;
+        }
+      } catch (dbError) {
+        logError("generate-code while checking DB", dbError);
+        return res.status(500).json({ status: "error", message: "Database error during code checking." });
       }
       attempts++;
     }
     
     if (attempts === maxAttempts) {
-      console.error("Failed to generate a unique code after several attempts.");
+      console.error("Failed to generate a unique code after 10 attempts.");
       return res.status(500).json({ status: "error", message: "Failed to generate a unique code, please try again." });
     }
     
     res.json({ status: "success", code });
   } catch (err) {
-    console.error("Error while generating code:", err);
+    logError("generate-code endpoint", err);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
@@ -65,20 +75,17 @@ app.get("/grocery-list", async (req, res) => {
   try {
     const query = "SELECT * FROM grocery_list WHERE user_code = $1";
     const result = await pool.query(query, [userCode]);
-    if (result.rowCount === 0) {
-      res.json({ status: "success", data: [] });
-    } else {
-      res.json({ status: "success", data: result.rows });
-    }
+    console.log(`Fetched grocery list for ${userCode}, row count: ${result.rowCount}`);
+    res.json({ status: "success", data: result.rows });
   } catch (err) {
-    console.error("Error fetching grocery list:", err);
+    logError("grocery-list GET", err);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
 
 /*
   Endpoint: /grocery-list (POST)
-  Inserts or updates a grocery list record.
+  Inserts or updates (upserts) a grocery list record.
 */
 app.post("/grocery-list", async (req, res) => {
   const { user_code, items, total_price, budget } = req.body;
@@ -96,11 +103,11 @@ app.post("/grocery-list", async (req, res) => {
       created_at = CURRENT_TIMESTAMP;
   `;
   try {
-    await pool.query(upsertQuery, [user_code, JSON.stringify(items), total_price, budget]);
-    console.log("Stored/Updated grocery list for user:", user_code);
+    const result = await pool.query(upsertQuery, [user_code, JSON.stringify(items), total_price, budget]);
+    console.log(`Stored/Updated grocery list for user ${user_code}. Result:`, result);
     res.json({ status: "success" });
   } catch (err) {
-    console.error("Error storing/updating grocery list:", err);
+    logError("grocery-list POST", err);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
