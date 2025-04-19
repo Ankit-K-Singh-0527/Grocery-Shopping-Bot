@@ -2,13 +2,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const { Pool } = require("pg");
 
-// Use PG_CONNECTION_STRING from environment variables.
-// Netlify should inject this variable in all environments.
-const connectionString =
-  process.env.PG_CONNECTION_STRING ||
-  "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
+// Hardcoded connection string as default
+const defaultConnectionString = "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
 
-console.log("Using connection string:", connectionString); // Debug: Remove in production
+// Use the environment variable if set, otherwise fallback to the default hardcoded connection string.
+const connectionString = process.env.PG_CONNECTION_STRING || defaultConnectionString;
 
 const pool = new Pool({ connectionString });
 
@@ -17,16 +15,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
-// Helper function to log errors with detailed info.
-const logError = (context, err) => {
-  console.error(`Error in ${context}:`, err.message);
-  console.error(err.stack);
-};
-
-/*
-  Endpoint: /generate-code
-  Generates a unique user code. Added extra logging of each attempt.
-*/
+// Endpoint to generate a unique user code
 app.get("/generate-code", async (req, res) => {
   try {
     let code = "";
@@ -45,7 +34,7 @@ app.get("/generate-code", async (req, res) => {
           break;
         }
       } catch (dbError) {
-        logError("generate-code while checking DB", dbError);
+        console.error("Error during code generation while checking DB:", dbError.message);
         return res.status(500).json({ status: "error", message: "Database error during code checking." });
       }
       attempts++;
@@ -58,15 +47,12 @@ app.get("/generate-code", async (req, res) => {
     
     res.json({ status: "success", code });
   } catch (err) {
-    logError("generate-code endpoint", err);
+    console.error("Error in /generate-code endpoint:", err.message);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
 
-/*
-  Endpoint: /grocery-list (GET)
-  Retrieves the grocery list for a given user code.
-*/
+// Endpoint to check and retrieve the grocery list for a given user code
 app.get("/grocery-list", async (req, res) => {
   const userCode = req.query.userCode;
   if (!userCode) {
@@ -78,15 +64,12 @@ app.get("/grocery-list", async (req, res) => {
     console.log(`Fetched grocery list for ${userCode}, row count: ${result.rowCount}`);
     res.json({ status: "success", data: result.rows });
   } catch (err) {
-    logError("grocery-list GET", err);
+    console.error("Error in /grocery-list GET endpoint:", err.message);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
 
-/*
-  Endpoint: /grocery-list (POST)
-  Inserts or updates (upserts) a grocery list record.
-*/
+// Endpoint to insert or update (upsert) a grocery list record
 app.post("/grocery-list", async (req, res) => {
   const { user_code, items, total_price, budget } = req.body;
   if (!user_code) {
@@ -103,11 +86,11 @@ app.post("/grocery-list", async (req, res) => {
       created_at = CURRENT_TIMESTAMP;
   `;
   try {
-    const result = await pool.query(upsertQuery, [user_code, JSON.stringify(items), total_price, budget]);
-    console.log(`Stored/Updated grocery list for user ${user_code}. Result:`, result);
+    await pool.query(upsertQuery, [user_code, JSON.stringify(items), total_price, budget]);
+    console.log("Stored/Updated grocery list for user:", user_code);
     res.json({ status: "success" });
   } catch (err) {
-    logError("grocery-list POST", err);
+    console.error("Error in /grocery-list POST endpoint:", err.message);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
