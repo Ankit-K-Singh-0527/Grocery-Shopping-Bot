@@ -2,11 +2,13 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const { Pool } = require("pg");
 
-// Use your actual PostgreSQL connection string below or set it as an environment variable.
-const connectionString = process.env.PG_CONNECTION_STRING || "postgres://username:password@localhost:5432/databaseName";
-const pool = new Pool({
-  connectionString,
-});
+// Use PG_CONNECTION_STRING from the environment variable.
+// This connection string is injected by Netlify in all environments.
+const connectionString =
+  process.env.PG_CONNECTION_STRING ||
+  "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
+
+const pool = new Pool({ connectionString });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,8 +19,8 @@ app.use(bodyParser.json());
 app.get("/generate-code", async (req, res) => {
   try {
     let code = "";
-    let exists = true; 
-    // Keep generating until the code is unique in the database
+    let exists = true;
+    // Generate a code until we find a unique one.
     while (exists) {
       code = "user" + (Math.floor(Math.random() * 900) + 100);
       const checkQuery = "SELECT * FROM grocery_list WHERE user_code = $1";
@@ -35,7 +37,7 @@ app.get("/generate-code", async (req, res) => {
   }
 });
 
-// Endpoint to check and get the grocery list for a given user code
+// Endpoint to check and retrieve the grocery list for a given user code
 app.get("/grocery-list", async (req, res) => {
   const userCode = req.query.userCode;
   if (!userCode) {
@@ -55,13 +57,12 @@ app.get("/grocery-list", async (req, res) => {
   }
 });
 
-// Endpoint to store (upsert) a grocery list
+// Endpoint to insert or update (upsert) a grocery list
 app.post("/grocery-list", async (req, res) => {
   const { user_code, items, total_price, budget } = req.body;
   if (!user_code) {
     return res.status(400).json({ status: "error", message: "Missing user_code in request body." });
   }
-  // Upsert the grocery list record; assumes user_code is the unique key.
   const upsertQuery = `
     INSERT INTO grocery_list (user_code, items, total_price, budget, created_at)
     VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
@@ -70,7 +71,7 @@ app.post("/grocery-list", async (req, res) => {
       items = EXCLUDED.items, 
       total_price = EXCLUDED.total_price, 
       budget = EXCLUDED.budget,
-      created_at = EXCLUDED.created_at;
+      created_at = CURRENT_TIMESTAMP;
   `;
   try {
     await pool.query(upsertQuery, [user_code, JSON.stringify(items), total_price, budget]);
@@ -82,7 +83,6 @@ app.post("/grocery-list", async (req, res) => {
   }
 });
 
-// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
