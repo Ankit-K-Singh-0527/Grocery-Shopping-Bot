@@ -2,8 +2,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const { Pool } = require("pg");
 
-// Use PG_CONNECTION_STRING from the environment variable.
-// This connection string is injected by Netlify in all environments.
+// Use PG_CONNECTION_STRING from environment variables.
+// Netlify will inject the connection string for all deployment types.
 const connectionString =
   process.env.PG_CONNECTION_STRING ||
   "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
@@ -15,29 +15,48 @@ const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
-// Endpoint to generate a unique user code
+/*
+  Endpoint: /generate-code
+  Generates a unique user code by iterating and checking against the database.
+  Debugging logs have been added to determine if there is an error with the database query or 
+  a potential infinite loop.
+*/
 app.get("/generate-code", async (req, res) => {
   try {
     let code = "";
-    let exists = true;
-    // Generate a code until we find a unique one.
-    while (exists) {
+    let maxAttempts = 10; // Set a limit to avoid infinite loops.
+    let attempts = 0;
+    
+    while (attempts < maxAttempts) {
       code = "user" + (Math.floor(Math.random() * 900) + 100);
+      console.log(`Attempt ${attempts + 1}: Checking code ${code}`);
+      
       const checkQuery = "SELECT * FROM grocery_list WHERE user_code = $1";
       const result = await pool.query(checkQuery, [code]);
+      
       if (result.rowCount === 0) {
-        exists = false;
+        console.log("Unique code found:", code);
+        break;
       }
+      attempts++;
     }
-    console.log("Generated code:", code);
+    
+    if (attempts === maxAttempts) {
+      console.error("Failed to generate a unique code after several attempts.");
+      return res.status(500).json({ status: "error", message: "Failed to generate a unique code, please try again." });
+    }
+    
     res.json({ status: "success", code });
   } catch (err) {
-    console.error("Error generating code:", err);
+    console.error("Error while generating code:", err);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
 
-// Endpoint to check and retrieve the grocery list for a given user code
+/*
+  Endpoint: /grocery-list (GET)
+  Retrieves the grocery list for a given user code.
+*/
 app.get("/grocery-list", async (req, res) => {
   const userCode = req.query.userCode;
   if (!userCode) {
@@ -57,7 +76,10 @@ app.get("/grocery-list", async (req, res) => {
   }
 });
 
-// Endpoint to insert or update (upsert) a grocery list
+/*
+  Endpoint: /grocery-list (POST)
+  Inserts or updates a grocery list record.
+*/
 app.post("/grocery-list", async (req, res) => {
   const { user_code, items, total_price, budget } = req.body;
   if (!user_code) {
@@ -78,7 +100,7 @@ app.post("/grocery-list", async (req, res) => {
     console.log("Stored/Updated grocery list for user:", user_code);
     res.json({ status: "success" });
   } catch (err) {
-    console.error("Error storing grocery list:", err);
+    console.error("Error storing/updating grocery list:", err);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
