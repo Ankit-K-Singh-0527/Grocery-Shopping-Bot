@@ -278,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Function to save (or upsert) the user record with an empty grocery list
+// Function to store a new user record immediately once the user code is created
 function storeUserRecord() {
   if (!currentUserCode) {
     console.error("storeUserRecord called without a valid currentUserCode.");
@@ -289,8 +289,8 @@ function storeUserRecord() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      user_id: currentUserCode,
-      items: [],         // Initially empty
+      user_id: currentUserCode, // ensure key is 'user_id'
+      items: [],         // Initially empty list
       total_price: 0,
       budget: currentBudget
     })
@@ -305,7 +305,7 @@ function storeUserRecord() {
     .catch(err => console.error("storeUserRecord error:", err));
 }
 
-// Function to initialize or validate the user code using prompt retry logic.
+// Function to initialize/obtain the user code from the user or generate a new one.
 async function initializeUserCodeLoop() {
   let codeSet = false;
   while (!codeSet) {
@@ -354,11 +354,11 @@ async function initializeUserCodeLoop() {
   
   // Immediately store a new user record into the database.
   storeUserRecord();
-  // Then load user's grocery list (which should be empty initially).
+  // Then load the user's grocery list, which should be empty initially.
   loadUserList(currentUserCode);
 }
 
-// Function to load the grocery list from the backend
+// Function to load the grocery list from the backend.
 function loadUserList(code) {
   fetch("/.netlify/functions/app/grocery-list?userId=" + encodeURIComponent(code))
     .then(response => response.json())
@@ -378,7 +378,6 @@ function loadUserList(code) {
         }
         totalPriceDisplay.textContent = "$" + totalPrice;
       } else {
-        // If no record exists, initialize with defaults.
         groceryList = [];
         currentBudget = null;
         totalPrice = 0;
@@ -394,7 +393,7 @@ function loadUserList(code) {
     });
 }
 
-// Budget modal event handlers
+// Budget modal event handlers.
 document.getElementById("closeBudgetButton").addEventListener("click", () => {
   budgetModal.classList.add("hidden");
 });
@@ -454,7 +453,7 @@ function renderGroceryList() {
     const itemSpan = document.createElement("span");
     itemSpan.textContent = item.name + " - $" + item.price + " ";
     li.appendChild(itemSpan);
-    // Edit button for each item.
+    // Edit button.
     const editButton = document.createElement("button");
     editButton.textContent = "Edit";
     editButton.style.marginRight = "5px";
@@ -475,7 +474,7 @@ function renderGroceryList() {
       storeGroceryList();
     });
     li.appendChild(editButton);
-    // Delete button for each item.
+    // Delete button.
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "Delete";
     deleteButton.addEventListener("click", () => {
@@ -498,15 +497,18 @@ function storeGroceryList() {
     return;
   }
   console.log("Storing grocery list for user:", currentUserCode);
+  // Log the payload so we can verify the user_id is present
+  const payload = {
+    user_id: currentUserCode,
+    items: groceryList,
+    total_price: totalPrice,
+    budget: currentBudget
+  };
+  console.log("Payload:", JSON.stringify(payload));
   fetch("/.netlify/functions/app/grocery-list", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      user_id: currentUserCode,
-      items: groceryList,
-      total_price: totalPrice,
-      budget: currentBudget
-    })
+    body: JSON.stringify(payload)
   })
     .then(response => {
       if (!response.ok) {
@@ -520,7 +522,6 @@ function storeGroceryList() {
 
 // Ably subscription to receive updates from other users.
 channel.subscribe("list-updated", (message) => {
-  // If the update is meant for this user, display it in the updatedList section.
   if (message.data.connectedUsers && message.data.connectedUsers.includes(currentUserCode)) {
     updatedListEl.innerHTML = "";
     message.data.list.forEach(item => {
@@ -530,13 +531,12 @@ channel.subscribe("list-updated", (message) => {
     });
     mergeDiscardButtons.classList.remove("hidden");
   }
-  // Forward update if this user is not in the message path.
   if (!message.data.path || !message.data.path.includes(currentUserCode)) {
     forwardUpdate(message);
   }
 });
 
-// Helper to forward updates to connected users.
+// Helper to forward updates.
 function forwardUpdate(message) {
   let forwardedPath = message.data.path ? [...message.data.path] : [message.data.user];
   if (!forwardedPath.includes(currentUserCode)) {
@@ -554,7 +554,7 @@ function forwardUpdate(message) {
   }
 }
 
-// Merge two lists without duplicate items.
+// Merge two lists without duplicates.
 function mergeLists(list1, list2) {
   const merged = [...list1];
   list2.forEach(item2 => {
@@ -565,7 +565,7 @@ function mergeLists(list1, list2) {
   return merged;
 }
 
-// Merge/discard updates received from other users.
+// Merge/discard updates.
 mergeListButton.addEventListener("click", () => {
   const incomingList = Array.from(updatedListEl.childNodes).map(li => {
     const parts = li.textContent.split(" - $");
@@ -584,7 +584,7 @@ discardListButton.addEventListener("click", () => {
   mergeDiscardButtons.classList.add("hidden");
 });
 
-// Connection flow: Allow users to connect for sharing updates.
+// Connection flow.
 connectButton.addEventListener("click", () => {
   const targetCode = connectInputEl.value.trim();
   if (targetCode) {
@@ -610,7 +610,7 @@ channel.subscribe("connect-request", (message) => {
       type: "initial",
       list: groceryList,
       connectedUsers: [message.data.user],
-      path: [currentUserCode]
+      path: [currentUserCode],
     });
   }
 });
