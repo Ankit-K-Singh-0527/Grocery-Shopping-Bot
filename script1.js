@@ -625,3 +625,53 @@ channel.subscribe("connect-back", (message) => {
     connectedUsers.add(message.data.user);
   }
 });
+// Function to generate a user code and store the new user record.
+async function initializeUserCode() {
+  try {
+    // Step 1: Generate the user code.
+    const generateCodeResponse = await fetch(
+      "https://groceryshoppingbot.netlify.app/.netlify/functions/app/generate-code"
+    );
+    const generateCodeData = await generateCodeResponse.json();
+
+    if (!generateCodeResponse.ok || generateCodeData.status !== "success") {
+      throw new Error("Failed to generate user code.");
+    }
+
+    const userCode = generateCodeData.code;
+    console.log("User code set to:", userCode);
+
+    // Step 2: Store the new user record.
+    const payload = {
+      user_id: userCode,
+      items: [],
+      total_price: 0,
+      budget: null,
+    };
+
+    console.log("Storing new user record for:", userCode);
+    console.log("Payload:", JSON.stringify(payload));
+
+    const storeUserRecordResponse = await fetch(
+      "https://groceryshoppingbot.netlify.app/.netlify/functions/app/grocery-list",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!storeUserRecordResponse.ok) {
+      const errorText = await storeUserRecordResponse.text();
+      throw new Error(`Store user record failed: ${errorText}`);
+    }
+
+    const storeUserRecordData = await storeUserRecordResponse.json();
+    console.log("Store user record success:", storeUserRecordData);
+  } catch (error) {
+    console.error("Error during user initialization:", error);
+  }
+}
+
+// Call the function to initialize the user code and store the record.
+initializeUserCode();
