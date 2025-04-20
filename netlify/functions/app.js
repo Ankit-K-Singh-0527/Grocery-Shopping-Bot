@@ -16,11 +16,12 @@ const app = express();
 // Use express.json() middleware to parse JSON bodies.
 app.use(express.json());
 
-// Middleware to ensure req.body is always an object even if delivered as a string.
+// Additional middleware to ensure that the request body is parsed properly.
 app.use((req, res, next) => {
-  if (typeof req.body === "string") {
+  // If no keys exist, assume the body wasn't parsed.
+  if (!req.body || Object.keys(req.body).length === 0) {
     try {
-      req.body = JSON.parse(req.body);
+      req.body = JSON.parse(req.rawBody || "{}");
     } catch (err) {
       console.error("Error parsing request body:", err);
       return res
@@ -41,7 +42,7 @@ app.use((req, res, next) => {
 
 /**
  * Internal function to generate a unique user code.
- * This uses the same logic as the /generate-code endpoint.
+ * This logic is the same as used by the /generate-code endpoint.
  */
 async function generateUserCodeInternal() {
   let code = "";
@@ -68,7 +69,7 @@ async function generateUserCodeInternal() {
   throw new Error("Unable to generate a unique code after several attempts.");
 }
 
-// /generate-code endpoint: Generates a unique user_id, stores a new record, and returns the user_id.
+// /generate-code endpoint: Generates and returns a unique user_id.
 app.get("/generate-code", async (req, res) => {
   try {
     const code = await generateUserCodeInternal();
@@ -79,7 +80,7 @@ app.get("/generate-code", async (req, res) => {
   }
 });
 
-// /grocery-list GET endpoint: Retrieves the grocery list for a given user.
+// /grocery-list GET endpoint: Retrieves the grocery list for a given user_id.
 app.get("/grocery-list", async (req, res) => {
   console.log("GET /grocery-list query parameters:", req.query);
   const user_id = req.query.user_id;
@@ -93,7 +94,6 @@ app.get("/grocery-list", async (req, res) => {
     const query = "SELECT * FROM grocery_list WHERE user_id = $1";
     const result = await pool.query(query, [user_id]);
     console.log(`Found ${result.rowCount} record(s) for user_id ${user_id}`);
-    
     // Parse the 'items' field from JSON before sending the response.
     const rows = result.rows.map(row => {
       try {
@@ -112,12 +112,12 @@ app.get("/grocery-list", async (req, res) => {
 });
 
 // /grocery-list POST endpoint: Inserts or updates a grocery list record.
-// This endpoint will fetch the user_id from the DB record (using the value obtained from /generate-code)
-// rather than trusting the client payload.
+// This endpoint ignores the user_id sent by the client and instead fetches the record from the DB.
 app.post("/grocery-list", async (req, res) => {
   console.log("Raw POST body:", req.body);
   const body = req.body;
-  // Check for a user_id in the request
+
+  // Read the user_id from the client payload.
   const clientUserId = body.user_id || body.userId;
   if (!clientUserId) {
     return res.status(400).json({
@@ -127,7 +127,7 @@ app.post("/grocery-list", async (req, res) => {
     });
   }
   
-  // Query the database to fetch the user_id that was created during /generate-code.
+  // Now, fetch the user_id from the database to ensure we use the same one generated via /generate-code.
   let dbUserId;
   try {
     const result = await pool.query(
@@ -138,6 +138,7 @@ app.post("/grocery-list", async (req, res) => {
       dbUserId = result.rows[0].user_id;
       console.log("Fetched user_id from DB:", dbUserId);
     } else {
+      // If not found in the DB, instruct the client to run /generate-code.
       console.error("User_id not found in DB for:", clientUserId);
       return res.status(400).json({
         status: "error",
@@ -152,6 +153,7 @@ app.post("/grocery-list", async (req, res) => {
       .json({ status: "error", message: "Error fetching user_id from DB" });
   }
   
+  // Use the DB user_id for the upsert.
   const user_id = dbUserId;
   const items = body.items;
   const total_price = body.total_price;
