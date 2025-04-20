@@ -284,7 +284,7 @@ async function initializeUserCodeLoop() {
   while (!codeSet) {
     console.log("Initializing user code...");
     alert("A prompt will ask for your unique code. Click OK to continue.");
-    
+
     // Prompt the user for a code; if left blank, we generate a new code.
     let code = prompt("Enter your unique code (leave blank if new):");
     if (code && code.trim() !== "") {
@@ -321,9 +321,10 @@ async function initializeUserCodeLoop() {
       }
     }
   }
-  // Display the user code and load stored list
+  // When a valid user code is obtained, display it and store the initial record.
   userCodeDisplay.textContent = currentUserCode;
-  // Immediately store the new user record even if list is empty
+  console.log("User code set to:", currentUserCode);
+  // Immediately store an empty grocery list for the new user.
   storeGroceryList();
   loadUserList(currentUserCode);
 }
@@ -391,7 +392,8 @@ function addItemToList(item) {
     alert("Duplicate item!");
     return;
   }
-  const price = Math.floor(Math.random() * 20) + 1; // Random price generation.
+  // Generate a random price.
+  const price = Math.floor(Math.random() * 20) + 1;
   groceryList.push({ name: item, price });
   totalPrice += price;
   totalPriceDisplay.textContent = "$" + totalPrice;
@@ -462,26 +464,34 @@ function renderGroceryList() {
 
 // Function to persist the grocery list to the backend.
 function storeGroceryList() {
-  if (!currentUserCode) return;
-  console.log("Storing grocery list for:", currentUserCode);
+  if (!currentUserCode) {
+    console.error("storeGroceryList called with empty currentUserCode");
+    return;
+  }
+  console.log("Storing grocery list for user:", currentUserCode);
   fetch("/.netlify/functions/app/grocery-list", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      user_id: currentUserCode, // using "user_id" as expected by the backend
+      user_id: currentUserCode,
       items: groceryList,
       total_price: totalPrice,
       budget: currentBudget
     })
   })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        console.error("Response not ok:", response.status);
+      }
+      return response.json();
+    })
     .then(data => console.log("Stored:", data))
     .catch(err => console.error("Store error:", err));
 }
 
 // Ably subscription to receive updates from other users.
 channel.subscribe("list-updated", (message) => {
-  // If the update is meant for this user, show in the updatedList section.
+  // If update is meant for this user, display it in the updatedList element.
   if (message.data.connectedUsers && message.data.connectedUsers.includes(currentUserCode)) {
     updatedListEl.innerHTML = "";
     message.data.list.forEach(item => {
@@ -491,7 +501,7 @@ channel.subscribe("list-updated", (message) => {
     });
     mergeDiscardButtons.classList.remove("hidden");
   }
-  // Forward the update if not already in the path.
+  // Forward updates if this user is not already in the path.
   if (!message.data.path || !message.data.path.includes(currentUserCode)) {
     forwardUpdate(message);
   }
@@ -564,14 +574,14 @@ channel.subscribe("connect-request", (message) => {
     connectedUsers.add(message.data.user);
     channel.publish("connect-back", {
       user: currentUserCode,
-      target: message.data.user,
+      target: message.data.user
     });
     channel.publish("list-updated", {
       user: currentUserCode,
       type: "initial",
       list: groceryList,
       connectedUsers: [message.data.user],
-      path: [currentUserCode],
+      path: [currentUserCode]
     });
   }
 });
