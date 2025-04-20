@@ -55,7 +55,7 @@ app.get("/generate-code", async (req, res) => {
 
 // /grocery-list GET endpoint: retrieves the grocery list for a given user.
 app.get("/grocery-list", async (req, res) => {
-  const userId = req.query.userId;
+  const userId = req.query.user_id;
   if (!userId) {
     return res.status(400).json({ status: "error", message: "Missing userId parameter." });
   }
