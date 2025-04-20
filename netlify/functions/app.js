@@ -12,11 +12,11 @@ const pool = new Pool({
 });
 
 const app = express();
-// Use express.json() to parse JSON bodies
+
+// Use express.json() middleware to parse JSON bodies
 app.use(express.json());
 
-// Middleware to handle cases where the body may already be a string.
-// This ensures req.body is always an object.
+// Middleware to ensure req.body is always an object even if delivered as a string.
 app.use((req, res, next) => {
   if (typeof req.body === "string") {
     try {
@@ -99,9 +99,11 @@ app.get("/grocery-list", async (req, res) => {
 
 // /grocery-list POST endpoint: Inserts or updates a grocery list record.
 app.post("/grocery-list", async (req, res) => {
-  // By now, our middleware should have parsed the body properly.
-  const body = req.body;  
-  const user_id = body.user_id;
+  console.log("Raw POST body:", req.body);
+  
+  // Fallback: if user_id is not found, try checking for userId.
+  const body = req.body;
+  const user_id = body.user_id || body.userId;
   const items = body.items;
   const total_price = body.total_price;
   const budget = body.budget;
@@ -109,6 +111,8 @@ app.post("/grocery-list", async (req, res) => {
   if (!user_id) {
     return res.status(400).json({ status: "error", message: "Missing user_id in request body. Please use the user_id obtained from /generate-code." });
   }
+  
+  console.log("Parsed POST body:", { user_id, items, total_price, budget });
   
   const upsertQuery = `
     INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
