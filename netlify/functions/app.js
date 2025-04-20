@@ -37,30 +37,40 @@ app.use((req, res, next) => {
   next();
 });
 
-// /generate-code endpoint: Generates a unique user_id, stores an empty grocery list record, and returns the user_id.
+/**
+ * Internal function to generate a unique user code.
+ * This uses the same logic as the /generate-code endpoint.
+ */
+async function generateUserCodeInternal() {
+  let code = "";
+  const maxAttempts = 10;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    code = "user" + (Math.floor(Math.random() * 900) + 100);
+    try {
+      const checkQuery = "SELECT * FROM grocery_list WHERE user_id = $1";
+      const result = await pool.query(checkQuery, [code]);
+      if (result.rowCount === 0) {
+        // Insert a new record with an empty list.
+        const insertQuery = `
+          INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
+          VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+        `;
+        await pool.query(insertQuery, [code, JSON.stringify([]), 0, null]);
+        return code;
+      }
+    } catch (dbError) {
+      console.error("Database error during code check:", dbError);
+      throw new Error("Database error during code check.");
+    }
+  }
+  throw new Error("Unable to generate a unique code after several attempts.");
+}
+
+// /generate-code endpoint: Generates a unique user_id, stores a new record, and returns the user_id.
 app.get("/generate-code", async (req, res) => {
   try {
-    let code = "";
-    const maxAttempts = 10;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      code = "user" + (Math.floor(Math.random() * 900) + 100);
-      try {
-        const checkQuery = "SELECT * FROM grocery_list WHERE user_id = $1";
-        const result = await pool.query(checkQuery, [code]);
-        if (result.rowCount === 0) {
-          const insertQuery = `
-            INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
-            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-          `;
-          await pool.query(insertQuery, [code, JSON.stringify([]), 0, null]);
-          return res.json({ status: "success", code });
-        }
-      } catch (dbError) {
-        console.error("Database error during code check:", dbError);
-        return res.status(500).json({ status: "error", message: "Database error during code check." });
-      }
-    }
-    res.status(500).json({ status: "error", message: "Unable to generate a unique code after several attempts." });
+    const code = await generateUserCodeInternal();
+    return res.json({ status: "success", code });
   } catch (err) {
     console.error("Error generating code:", err);
     res.status(500).json({ status: "error", message: err.message });
@@ -98,19 +108,36 @@ app.get("/grocery-list", async (req, res) => {
 });
 
 // /grocery-list POST endpoint: Inserts or updates a grocery list record.
+// If the user_id is missing from the request body, fetch the most recent record from the DB,
+// assuming that it was created via the /generate-code endpoint.
 app.post("/grocery-list", async (req, res) => {
   console.log("Raw POST body:", req.body);
-  
-  // Fallback: if user_id is not found, try checking for userId.
   const body = req.body;
-  const user_id = body.user_id || body.userId;
+  let user_id = body.user_id || body.userId;
+
+  // If user_id is not provided by the client, fetch it from the DB.
+  if (!user_id) {
+    try {
+      // Here we assume that the most recently created record corresponds to the user.
+      // You may need to adjust this logic based on your application's needs.
+      const result = await pool.query("SELECT user_id FROM grocery_list ORDER BY created_at DESC LIMIT 1");
+      if (result.rowCount > 0) {
+        user_id = result.rows[0].user_id;
+        console.log("Fetched user_id from DB:", user_id);
+      } else {
+        // If no record exists, generate a new one.
+        user_id = await generateUserCodeInternal();
+        console.log("No existing record found. Generated new user_id:", user_id);
+      }
+    } catch (err) {
+      console.error("Error fetching user_id from DB:", err);
+      return res.status(500).json({ status: "error", message: "Error fetching user_id from DB" });
+    }
+  }
+  
   const items = body.items;
   const total_price = body.total_price;
   const budget = body.budget;
-  
-  if (!user_id) {
-    return res.status(400).json({ status: "error", message: "Missing user_id in request body. Please use the user_id obtained from /generate-code." });
-  }
   
   console.log("Parsed POST body:", { user_id, items, total_price, budget });
   
@@ -126,7 +153,7 @@ app.post("/grocery-list", async (req, res) => {
   
   try {
     await pool.query(upsertQuery, [user_id, JSON.stringify(items), total_price, budget]);
-    res.json({ status: "success" });
+    res.json({ status: "success", user_id });
   } catch (err) {
     console.error("Error upserting grocery list:", err);
     res.status(500).json({ status: "error", message: err.message });
