@@ -20,11 +20,9 @@ const app = express();
 app.use(bodyParser.json());
 
 // Middleware to strip Netlify function prefix from the URL.
-// If the URL starts with '/.netlify/functions/app', remove that so that
-// routes like "/generate-code" work as expected.
 app.use((req, res, next) => {
-  if (req.url.startsWith('/.netlify/functions/app')) {
-    req.url = req.url.replace('/.netlify/functions/app', '');
+  if (req.url.startsWith("/.netlify/functions/app")) {
+    req.url = req.url.replace("/.netlify/functions/app", "");
   }
   next();
 });
