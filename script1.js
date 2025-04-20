@@ -278,7 +278,34 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Function to initialize or validate the user code using retry logic.
+// Function to save (or upsert) the user record with an empty grocery list
+function storeUserRecord() {
+  if (!currentUserCode) {
+    console.error("storeUserRecord called without a valid currentUserCode.");
+    return;
+  }
+  console.log("Storing new user record for:", currentUserCode);
+  fetch("/.netlify/functions/app/grocery-list", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: currentUserCode,
+      items: [],         // Initially empty
+      total_price: 0,
+      budget: currentBudget
+    })
+  })
+    .then(response => {
+      if (!response.ok) {
+        console.error("storeUserRecord response not ok:", response.status);
+      }
+      return response.json();
+    })
+    .then(data => console.log("storeUserRecord stored:", data))
+    .catch(err => console.error("storeUserRecord error:", err));
+}
+
+// Function to initialize or validate the user code using prompt retry logic.
 async function initializeUserCodeLoop() {
   let codeSet = false;
   while (!codeSet) {
@@ -321,11 +348,13 @@ async function initializeUserCodeLoop() {
       }
     }
   }
-  // When a valid user code is obtained, display it and store the initial record.
+  // Display the user code in the UI
   userCodeDisplay.textContent = currentUserCode;
   console.log("User code set to:", currentUserCode);
-  // Immediately store an empty grocery list for the new user.
-  storeGroceryList();
+  
+  // Immediately store a new user record into the database.
+  storeUserRecord();
+  // Then load user's grocery list (which should be empty initially).
   loadUserList(currentUserCode);
 }
 
@@ -349,7 +378,7 @@ function loadUserList(code) {
         }
         totalPriceDisplay.textContent = "$" + totalPrice;
       } else {
-        // Initialize if no data exists.
+        // If no record exists, initialize with defaults.
         groceryList = [];
         currentBudget = null;
         totalPrice = 0;
@@ -491,7 +520,7 @@ function storeGroceryList() {
 
 // Ably subscription to receive updates from other users.
 channel.subscribe("list-updated", (message) => {
-  // If update is meant for this user, display it in the updatedList element.
+  // If the update is meant for this user, display it in the updatedList section.
   if (message.data.connectedUsers && message.data.connectedUsers.includes(currentUserCode)) {
     updatedListEl.innerHTML = "";
     message.data.list.forEach(item => {
@@ -501,7 +530,7 @@ channel.subscribe("list-updated", (message) => {
     });
     mergeDiscardButtons.classList.remove("hidden");
   }
-  // Forward updates if this user is not already in the path.
+  // Forward update if this user is not in the message path.
   if (!message.data.path || !message.data.path.includes(currentUserCode)) {
     forwardUpdate(message);
   }
