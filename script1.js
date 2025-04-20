@@ -278,22 +278,24 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Function to store a new user record immediately once the user code is created
+// Function to store a new user record immediately once the user code is created.
 function storeUserRecord() {
   if (!currentUserCode) {
     console.error("storeUserRecord called without a valid currentUserCode.");
     return;
   }
+  const payload = {
+    user_id: currentUserCode, // using "user_id" key explicitly
+    items: [],                // empty list on creation
+    total_price: 0,
+    budget: currentBudget
+  };
   console.log("Storing new user record for:", currentUserCode);
+  console.log("Payload:", JSON.stringify(payload));
   fetch("/.netlify/functions/app/grocery-list", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      user_id: currentUserCode, // ensure key is 'user_id'
-      items: [],         // Initially empty list
-      total_price: 0,
-      budget: currentBudget
-    })
+    body: JSON.stringify(payload)
   })
     .then(response => {
       if (!response.ok) {
@@ -301,8 +303,12 @@ function storeUserRecord() {
       }
       return response.json();
     })
-    .then(data => console.log("storeUserRecord stored:", data))
-    .catch(err => console.error("storeUserRecord error:", err));
+    .then(data => {
+      console.log("storeUserRecord stored:", data);
+    })
+    .catch(err => {
+      console.error("storeUserRecord error:", err);
+    });
 }
 
 // Function to initialize/obtain the user code from the user or generate a new one.
@@ -311,7 +317,6 @@ async function initializeUserCodeLoop() {
   while (!codeSet) {
     console.log("Initializing user code...");
     alert("A prompt will ask for your unique code. Click OK to continue.");
-
     // Prompt the user for a code; if left blank, we generate a new code.
     let code = prompt("Enter your unique code (leave blank if new):");
     if (code && code.trim() !== "") {
@@ -348,13 +353,12 @@ async function initializeUserCodeLoop() {
       }
     }
   }
-  // Display the user code in the UI
+  // Display the user code in the UI.
   userCodeDisplay.textContent = currentUserCode;
   console.log("User code set to:", currentUserCode);
-  
   // Immediately store a new user record into the database.
   storeUserRecord();
-  // Then load the user's grocery list, which should be empty initially.
+  // Then load the user's grocery list (should be empty initially).
   loadUserList(currentUserCode);
 }
 
@@ -496,14 +500,13 @@ function storeGroceryList() {
     console.error("storeGroceryList called with empty currentUserCode");
     return;
   }
-  console.log("Storing grocery list for user:", currentUserCode);
-  // Log the payload so we can verify the user_id is present
   const payload = {
     user_id: currentUserCode,
     items: groceryList,
     total_price: totalPrice,
     budget: currentBudget
   };
+  console.log("Storing grocery list for user:", currentUserCode);
   console.log("Payload:", JSON.stringify(payload));
   fetch("/.netlify/functions/app/grocery-list", {
     method: "POST",
@@ -522,7 +525,10 @@ function storeGroceryList() {
 
 // Ably subscription to receive updates from other users.
 channel.subscribe("list-updated", (message) => {
-  if (message.data.connectedUsers && message.data.connectedUsers.includes(currentUserCode)) {
+  if (
+    message.data.connectedUsers &&
+    message.data.connectedUsers.includes(currentUserCode)
+  ) {
     updatedListEl.innerHTML = "";
     message.data.list.forEach(item => {
       const li = document.createElement("li");
