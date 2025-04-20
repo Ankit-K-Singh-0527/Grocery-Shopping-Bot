@@ -242,7 +242,7 @@
 const ably = new Ably.Realtime("QFP-Dw.p_WLfg:ilu2PzKHJR1Tn14Pl6l1-kO0RcoqK3-_NsXV8U8PjXk");
 const channel = ably.channels.get("grocery-list-channel");
 
-// Global variables (only declared once)
+// Global variables
 let currentUserCode = "";
 let currentBudget = null;
 let totalPrice = 0;
@@ -266,8 +266,7 @@ const connectButton = document.getElementById("connectButton");
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOMContentLoaded fired");
   initializeUserCodeLoop();
-  const addItemButton = document.getElementById("addItemButton");
-  addItemButton.addEventListener("click", () => {
+  document.getElementById("addItemButton").addEventListener("click", () => {
     const itemInputEl = document.getElementById("itemInput");
     const item = itemInputEl.value.trim();
     if (item) {
@@ -278,9 +277,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
-// (Then include your functions: initializeUserCodeLoop, loadUserList, addItemToList, renderGroceryList, storeGroceryList, publishGroceryList, etc.)
-// (Make sure there's only one copy of these functions.)
 
 // Function to initialize or validate the user code using retry logic.
 async function initializeUserCodeLoop() {
@@ -327,6 +323,8 @@ async function initializeUserCodeLoop() {
   }
   // Display the user code and load stored list
   userCodeDisplay.textContent = currentUserCode;
+  // Immediately store the new user record even if list is empty
+  storeGroceryList();
   loadUserList(currentUserCode);
 }
 
@@ -464,19 +462,15 @@ function renderGroceryList() {
 
 // Function to persist the grocery list to the backend.
 function storeGroceryList() {
-  // Check if currentUserCode is valid
+  if (!currentUserCode) return;
   console.log("Storing grocery list for:", currentUserCode);
-  if (!currentUserCode) {
-    console.error("currentUserCode is not set!");
-    return;
-  }
   fetch("/.netlify/functions/app/grocery-list", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      userId: currentUserCode, // this should match req.body.userId on backend
+      user_id: currentUserCode, // using "user_id" as expected by the backend
       items: groceryList,
-      totalPrice: totalPrice,
+      total_price: totalPrice,
       budget: currentBudget
     })
   })
@@ -570,14 +564,14 @@ channel.subscribe("connect-request", (message) => {
     connectedUsers.add(message.data.user);
     channel.publish("connect-back", {
       user: currentUserCode,
-      target: message.data.user
+      target: message.data.user,
     });
     channel.publish("list-updated", {
       user: currentUserCode,
       type: "initial",
       list: groceryList,
       connectedUsers: [message.data.user],
-      path: [currentUserCode]
+      path: [currentUserCode],
     });
   }
 });
