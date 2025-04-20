@@ -2,7 +2,8 @@ const express = require("express");
 const { Pool } = require("pg");
 const serverless = require("serverless-http");
 
-const connectionString = "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
+const connectionString =
+  "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
 console.log("Using connection string:", connectionString);
 
 const pool = new Pool({
@@ -66,16 +67,20 @@ app.get("/grocery-list", async (req, res) => {
 
 // /grocery-list POST endpoint: inserts or updates a grocery list record.
 app.post("/grocery-list", async (req, res) => {
-  console.log("POST /grocery-list req.body:", req.body);  // Debug log
-  const user_id = req.body.user_id || req.body.userId;
+  // Debug: log the raw body received
+  console.log("POST /grocery-list received body:", req.body);
+
+  // Use only user_id (keep it simple)
+  const user_id = req.body.user_id;
   const items = req.body.items;
-  const total_price = req.body.total_price || req.body.totalPrice;
+  const total_price = req.body.total_price;
   const budget = req.body.budget;
   
   if (!user_id) {
     return res.status(400).json({ status: "error", message: "Missing user_id in request body." });
   }
   
+  // Create the upsert query
   const upsertQuery = `
     INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
     VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
