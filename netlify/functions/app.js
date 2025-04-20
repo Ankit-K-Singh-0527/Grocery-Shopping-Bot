@@ -22,7 +22,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// /generate-code endpoint: generates a unique user code and stores it in the DB.
+// /generate-code endpoint: Generates a unique user_id, stores an empty grocery list record, and returns the user_id.
+// The client must call this endpoint first to get a unique code, and then use that code for subsequent POST/GET requests.
 app.get("/generate-code", async (req, res) => {
   try {
     let code = "";
@@ -53,7 +54,8 @@ app.get("/generate-code", async (req, res) => {
   }
 });
 
-// /grocery-list GET endpoint: retrieves the grocery list for a given user.
+// /grocery-list GET endpoint: Retrieves the grocery list for a given user.
+// The client should include the user_id as a query string parameter (e.g., ?user_id=user488).
 app.get("/grocery-list", async (req, res) => {
   console.log("GET /grocery-list query parameters:", req.query);
   const user_id = req.query.user_id;
@@ -85,7 +87,8 @@ app.get("/grocery-list", async (req, res) => {
   }
 });
 
-// /grocery-list POST endpoint: inserts or updates a grocery list record.
+// /grocery-list POST endpoint: Inserts or updates a grocery list record.
+// IMPORTANT: The client must include a valid user_id (obtained from /generate-code) in the POST request body.
 app.post("/grocery-list", async (req, res) => {
   const user_id = req.body.user_id;
   const items = req.body.items;
@@ -93,7 +96,7 @@ app.post("/grocery-list", async (req, res) => {
   const budget = req.body.budget;
   
   if (!user_id) {
-    return res.status(400).json({ status: "error", message: "Missing user_id in request body." });
+    return res.status(400).json({ status: "error", message: "Missing user_id in request body. Please use the user_id obtained from /generate-code." });
   }
   
   const upsertQuery = `
