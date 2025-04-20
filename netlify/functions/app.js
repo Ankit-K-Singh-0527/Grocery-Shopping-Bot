@@ -90,10 +90,21 @@ app.get("/grocery-list", async (req, res) => {
 // /grocery-list POST endpoint: Inserts or updates a grocery list record.
 // IMPORTANT: The client must include a valid user_id (obtained from /generate-code) in the POST request body.
 app.post("/grocery-list", async (req, res) => {
-  const user_id = req.body.user_id;
-  const items = req.body.items;
-  const total_price = req.body.total_price;
-  const budget = req.body.budget;
+  // In some serverless environments, req.body might be a string.
+  let body = req.body;
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch (parseError) {
+      console.error("Error parsing request body:", parseError);
+      return res.status(400).json({ status: "error", message: "Invalid JSON in request body." });
+    }
+  }
+
+  const user_id = body.user_id;
+  const items = body.items;
+  const total_price = body.total_price;
+  const budget = body.budget;
   
   if (!user_id) {
     return res.status(400).json({ status: "error", message: "Missing user_id in request body. Please use the user_id obtained from /generate-code." });
