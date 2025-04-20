@@ -12,9 +12,24 @@ const pool = new Pool({
 });
 
 const app = express();
+// Use express.json() to parse JSON bodies
 app.use(express.json());
 
-// Middleware to strip Netlify function prefix from the URL.
+// Middleware to handle cases where the body may already be a string.
+// This ensures req.body is always an object.
+app.use((req, res, next) => {
+  if (typeof req.body === "string") {
+    try {
+      req.body = JSON.parse(req.body);
+    } catch (err) {
+      console.error("Error parsing request body:", err);
+      return res.status(400).json({ status: "error", message: "Invalid JSON in request body." });
+    }
+  }
+  next();
+});
+
+// Middleware to strip the Netlify function prefix from the URL.
 app.use((req, res, next) => {
   if (req.url.startsWith("/.netlify/functions/app")) {
     req.url = req.url.replace("/.netlify/functions/app", "");
@@ -23,7 +38,6 @@ app.use((req, res, next) => {
 });
 
 // /generate-code endpoint: Generates a unique user_id, stores an empty grocery list record, and returns the user_id.
-// The client must call this endpoint first to get a unique code, and then use that code for subsequent POST/GET requests.
 app.get("/generate-code", async (req, res) => {
   try {
     let code = "";
@@ -34,7 +48,6 @@ app.get("/generate-code", async (req, res) => {
         const checkQuery = "SELECT * FROM grocery_list WHERE user_id = $1";
         const result = await pool.query(checkQuery, [code]);
         if (result.rowCount === 0) {
-          // Insert a new record with the generated code.
           const insertQuery = `
             INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
             VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
@@ -55,7 +68,6 @@ app.get("/generate-code", async (req, res) => {
 });
 
 // /grocery-list GET endpoint: Retrieves the grocery list for a given user.
-// The client should include the user_id as a query string parameter (e.g., ?user_id=user488).
 app.get("/grocery-list", async (req, res) => {
   console.log("GET /grocery-list query parameters:", req.query);
   const user_id = req.query.user_id;
@@ -68,18 +80,16 @@ app.get("/grocery-list", async (req, res) => {
     const result = await pool.query(query, [user_id]);
     console.log(`Found ${result.rowCount} record(s) for user_id ${user_id}`);
     
-    // Parse the items JSON string into an array before sending the response.
+    // Parse the 'items' field from JSON before sending the response.
     const rows = result.rows.map(row => {
       try {
         row.items = JSON.parse(row.items);
       } catch (e) {
         console.error("Error parsing items for user:", row.user_id, e);
       }
-      // Convert total_price to a number if necessary.
       row.total_price = Number(row.total_price);
       return row;
     });
-
     res.json({ status: "success", data: rows });
   } catch (err) {
     console.error("Error fetching grocery list:", err);
@@ -88,19 +98,9 @@ app.get("/grocery-list", async (req, res) => {
 });
 
 // /grocery-list POST endpoint: Inserts or updates a grocery list record.
-// IMPORTANT: The client must include a valid user_id (obtained from /generate-code) in the POST request body.
 app.post("/grocery-list", async (req, res) => {
-  // In some serverless environments, req.body might be a string.
-  let body = req.body;
-  if (typeof body === "string") {
-    try {
-      body = JSON.parse(body);
-    } catch (parseError) {
-      console.error("Error parsing request body:", parseError);
-      return res.status(400).json({ status: "error", message: "Invalid JSON in request body." });
-    }
-  }
-
+  // By now, our middleware should have parsed the body properly.
+  const body = req.body;  
   const user_id = body.user_id;
   const items = body.items;
   const total_price = body.total_price;
