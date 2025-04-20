@@ -13,7 +13,7 @@ const pool = new Pool({
 app.get("/generate-code", async (req, res) => {
   try {
     const userCode = "user" + Math.floor(Math.random() * 1000);
-    const result = await pool.query("INSERT INTO grocery_list (user_id, items, total_price, budget) VALUES ($1, $2, $3, $4) RETURNING *", [
+    await pool.query("INSERT INTO grocery_list (user_id, items, total_price, budget) VALUES ($1, $2, $3, $4)", [
       userCode,
       JSON.stringify([]),
       0,
