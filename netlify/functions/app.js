@@ -1,14 +1,10 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 const { Pool } = require("pg");
 const serverless = require("serverless-http");
 
-// Use the provided connection string directly.
 const connectionString = "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
-// Log the connection string
 console.log("Using connection string:", connectionString);
 
-// Create pool with SSL configuration for Neon
 const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false },
@@ -16,7 +12,8 @@ const pool = new Pool({
 
 const app = express();
 
-app.use(bodyParser.json());
+// Use the built-in JSON parser
+app.use(express.json());
 
 // Middleware to strip Netlify function prefix from the URL.
 app.use((req, res, next) => {
@@ -40,11 +37,13 @@ app.get("/generate-code", async (req, res) => {
           return res.json({ status: "success", code });
         }
       } catch (dbError) {
+        console.error("Database error during code check:", dbError);
         return res.status(500).json({ status: "error", message: "Database error during code check." });
       }
     }
     res.status(500).json({ status: "error", message: "Unable to generate a unique code after several attempts." });
   } catch (err) {
+    console.error("Error generating code:", err);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
@@ -60,33 +59,38 @@ app.get("/grocery-list", async (req, res) => {
     const result = await pool.query(query, [userId]);
     res.json({ status: "success", data: result.rows });
   } catch (err) {
+    console.error("Error fetching grocery list:", err);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
 
 // /grocery-list POST endpoint: inserts or updates a grocery list record.
 app.post("/grocery-list", async (req, res) => {
+  // Accept either "user_id" or "userId"
   const user_id = req.body.user_id || req.body.userId;
   const items = req.body.items;
   const total_price = req.body.total_price || req.body.totalPrice;
   const budget = req.body.budget;
+  
   if (!user_id) {
     return res.status(400).json({ status: "error", message: "Missing user_id in request body." });
   }
   
   const upsertQuery = `
-  INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
-  VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-  ON CONFLICT (user_id)
-  DO UPDATE SET 
-    items = EXCLUDED.items, 
-    total_price = EXCLUDED.total_price, 
-    budget = EXCLUDED.budget;
-`;
+    INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
+    VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+    ON CONFLICT (user_id)
+    DO UPDATE SET 
+      items = EXCLUDED.items, 
+      total_price = EXCLUDED.total_price, 
+      budget = EXCLUDED.budget;
+  `;
+  
   try {
     await pool.query(upsertQuery, [user_id, JSON.stringify(items), total_price, budget]);
     res.json({ status: "success" });
   } catch (err) {
+    console.error("Error upserting grocery list:", err);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
