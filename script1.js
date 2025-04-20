@@ -272,7 +272,7 @@ async function initializeUserCodeLoop() {
     if (code && code.trim() !== "") {
       try {
         // Check if the provided code exists in the backend.
-        const response = await fetch("/grocery-list?userCode=" + encodeURIComponent(code.trim()));
+        const response = await fetch("/.netlify/functions/app/grocery-list?userCode=" + encodeURIComponent(code.trim()));
         const data = await response.json();
         console.log("Check code response:", data);
         if (data.status === "success" && data.data && data.data.length > 0) {
@@ -288,7 +288,7 @@ async function initializeUserCodeLoop() {
     } else {
       try {
         // No code entered, so generate a new unique code.
-        const response = await fetch("/generate-code");
+        const response = await fetch("/.netlify/functions/app/generate-code");
         const data = await response.json();
         console.log("Generate code response:", data);
         if (data.status === "success" && data.code) {
@@ -310,7 +310,7 @@ async function initializeUserCodeLoop() {
 }
 
 function loadUserList(code) {
-  fetch("/grocery-list?userCode=" + encodeURIComponent(code))
+  fetch("/.netlify/functions/app/grocery-list?userCode=" + encodeURIComponent(code))
     .then(response => response.json())
     .then(data => {
       console.log("Load user list response:", data);
@@ -450,7 +450,7 @@ document.getElementById("addItemButton").addEventListener("click", () => {
 // Function to store the grocery list to the backend
 function storeGroceryList() {
   if (!currentUserCode) return;
-  fetch("/grocery-list", {
+  fetch("/.netlify/functions/app/grocery-list", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
