@@ -256,6 +256,16 @@ const budgetInput = document.getElementById("budgetInput");
 const budgetDisplay = document.getElementById("budgetDisplay");
 const totalPriceDisplay = document.getElementById("totalPriceDisplay");
 
+// Elements for receiving updates from others
+const updatedListEl = document.getElementById("updatedList"); // Container to display incoming list updates
+const mergeDiscardButtons = document.getElementById("mergeDiscardButtons"); // Container with merge/discard buttons
+const mergeListButton = document.getElementById("mergeListButton");
+const discardListButton = document.getElementById("discardListButton");
+
+// Element for connecting with other users
+const connectInputEl = document.getElementById("connectInput");
+const connectButton = document.getElementById("connectButton");
+
 // Initialize when the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOMContentLoaded fired");
@@ -406,10 +416,13 @@ function renderGroceryList() {
   groceryListEl.innerHTML = "";
   groceryList.forEach((item, index) => {
     const li = document.createElement("li");
+    
+    // Display the item details with edit and delete options.
     const itemSpan = document.createElement("span");
     itemSpan.textContent = item.name + " - $" + item.price + " ";
     li.appendChild(itemSpan);
-
+    
+    // Edit button for modifying an item.
     const editButton = document.createElement("button");
     editButton.textContent = "Edit";
     editButton.style.marginRight = "5px";
@@ -427,7 +440,8 @@ function renderGroceryList() {
       storeGroceryList();
     });
     li.appendChild(editButton);
-
+    
+    // Delete button for removing an item.
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "Delete";
     deleteButton.addEventListener("click", () => {
@@ -439,7 +453,7 @@ function renderGroceryList() {
       storeGroceryList();
     });
     li.appendChild(deleteButton);
-
+    
     groceryListEl.appendChild(li);
   });
 }
@@ -470,3 +484,111 @@ function storeGroceryList() {
     .then(data => console.log("Stored:", data))
     .catch(err => console.error("Store error:", err));
 }
+
+// Ably subscription to receive list updates from other users.
+channel.subscribe("list-updated", (message) => {
+  // If this update was sent to current user, display it in the updated list section.
+  if (
+    message.data.connectedUsers &&
+    message.data.connectedUsers.includes(currentUserCode)
+  ) {
+    updatedListEl.innerHTML = "";
+    message.data.list.forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = `${item.name} - $${item.price}`;
+      updatedListEl.appendChild(li);
+    });
+    mergeDiscardButtons.classList.remove("hidden");
+  }
+  // Forward update if this user is not in the path.
+  if (!message.data.path || !message.data.path.includes(currentUserCode)) {
+    forwardUpdate(message);
+  }
+});
+
+// Function to forward received update to connected users that haven't received it yet.
+function forwardUpdate(message) {
+  let forwardedPath = message.data.path ? [...message.data.path] : [message.data.user];
+  if (!forwardedPath.includes(currentUserCode)) {
+    forwardedPath.push(currentUserCode);
+  }
+  const targetUsers = Array.from(connectedUsers).filter(u => !forwardedPath.includes(u));
+  if (targetUsers.length > 0) {
+    channel.publish("list-updated", {
+      user: message.data.user,
+      type: message.data.type,
+      list: message.data.list,
+      connectedUsers: targetUsers,
+      path: forwardedPath
+    });
+  }
+}
+
+// Merge update list with current grocery list.
+function mergeLists(list1, list2) {
+  const merged = [...list1];
+  list2.forEach(item2 => {
+    if (!merged.some(item1 => item1.name.toLowerCase() === item2.name.toLowerCase())) {
+      merged.push(item2);
+    }
+  });
+  return merged;
+}
+
+// Setup merge and discard buttons for incoming updates.
+mergeListButton.addEventListener("click", () => {
+  groceryList = mergeLists(groceryList, Array.from(updatedListEl.childNodes).map(li => {
+    // Expect text formatted as "name - $price"
+    const [namePart, pricePart] = li.textContent.split(" - $");
+    return { name: namePart.trim(), price: Number(pricePart) };
+  }));
+  totalPrice = groceryList.reduce((sum, item) => sum + item.price, 0);
+  totalPriceDisplay.textContent = "$" + totalPrice;
+  renderGroceryList();
+  updatedListEl.innerHTML = "";
+  mergeDiscardButtons.classList.add("hidden");
+  storeGroceryList();
+});
+
+discardListButton.addEventListener("click", () => {
+  updatedListEl.innerHTML = "";
+  mergeDiscardButtons.classList.add("hidden");
+});
+
+// Connection flow: Allow users to connect so that updates are shared.
+connectButton.addEventListener("click", () => {
+  const targetCode = connectInputEl.value.trim();
+  if (targetCode) {
+    channel.publish("connect-request", {
+      user: currentUserCode,
+      target: targetCode
+    });
+    alert(`Connection request sent to user: ${targetCode}`);
+    connectInputEl.value = "";
+  } else {
+    alert("Please enter a valid user code to connect.");
+  }
+});
+
+channel.subscribe("connect-request", (message) => {
+  if (message.data.target === currentUserCode) {
+    connectedUsers.add(message.data.user);
+    channel.publish("connect-back", {
+      user: currentUserCode,
+      target: message.data.user
+    });
+    channel.publish("list-updated", {
+      user: currentUserCode,
+      type: "initial",
+      list: groceryList,
+      connectedUsers: [message.data.user],
+      path: [currentUserCode]
+    });
+  }
+});
+
+channel.subscribe("connect-back", (message) => {
+  if (message.data.target === currentUserCode) {
+    connectedUsers.add(message.data.user);
+  }
+});
