@@ -284,13 +284,11 @@ function storeUserRecord() {
     console.error("storeUserRecord called without a valid currentUserCode.");
     return;
   }
-  // Build payload with both keys.
+  // Build payload using the correct keys.
   const payload = {
-    user_id: currentUserCode,
-    //userId: currentUserCode,
+    user_id: currentUserCode,  // must be 'user_id'
     items: [],
-   // total_price: 0,
-    totalPrice: 0,
+    total_price: 0,            // use 'total_price' instead of 'totalPrice'
     budget: currentBudget
   };
   console.log("Storing new user record for:", currentUserCode);
@@ -320,7 +318,8 @@ async function initializeUserCodeLoop() {
     let code = prompt("Enter your unique code (leave blank if new):");
     if (code && code.trim() !== "") {
       try {
-        const response = await fetch("/.netlify/functions/app/grocery-list?userId=" + encodeURIComponent(code.trim()));
+        // Use 'user_id' instead of 'userId' in the query string.
+        const response = await fetch("/.netlify/functions/app/grocery-list?user_id=" + encodeURIComponent(code.trim()));
         const data = await response.json();
         console.log("Check code response:", data);
         if (data.status === "success" && data.data && data.data.length > 0) {
@@ -363,14 +362,15 @@ async function initializeUserCodeLoop() {
 
 // Function to load the grocery list from the backend.
 function loadUserList(code) {
-  fetch("/.netlify/functions/app/grocery-list?userId=" + encodeURIComponent(code))
+  // Use 'user_id' in the query string.
+  fetch("/.netlify/functions/app/grocery-list?user_id=" + encodeURIComponent(code))
     .then(response => response.json())
     .then(data => {
       console.log("Load user list response:", data);
       if (data.status === "success" && data.data && data.data.length > 0) {
         const record = data.data[0];
         try {
-          groceryList = JSON.parse(record.items);
+          groceryList = (typeof record.items === "string") ? JSON.parse(record.items) : record.items;
         } catch (e) {
           groceryList = [];
         }
@@ -499,13 +499,11 @@ function storeGroceryList() {
     console.error("storeGroceryList called with empty currentUserCode");
     return;
   }
-  // Build payload with both property names.
+  // Build payload with the correct key names.
   const payload = {
-    user_id: currentUserCode,
-    //userId: currentUserCode,
+    user_id: currentUserCode,       // key must be 'user_id'
     items: groceryList,
-    total_price: totalPrice,
-    totalPrice: totalPrice,
+    total_price: totalPrice,        // use 'total_price' instead of 'totalPrice'
     budget: currentBudget
   };
   console.log("Storing grocery list for user:", currentUserCode);
@@ -517,12 +515,12 @@ function storeGroceryList() {
   })
     .then(response => {
       if (!response.ok) {
-        console.error("Response not ok:", response.status);
+        console.error("storeGroceryList response not ok:", response.status);
       }
       return response.json();
     })
     .then(data => console.log("Stored:", data))
-    .catch(err => console.error("Store error:", err));
+    .catch(err => console.error("storeGroceryList error:", err));
 }
 
 // Ably subscription to receive updates from other users.
