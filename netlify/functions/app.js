@@ -13,7 +13,7 @@ const pool = new Pool({
 
 const app = express();
 
-// Use express.json() middleware to parse JSON bodies
+// Use express.json() middleware to parse JSON bodies.
 app.use(express.json());
 
 // Middleware to ensure req.body is always an object even if delivered as a string.
@@ -23,7 +23,9 @@ app.use((req, res, next) => {
       req.body = JSON.parse(req.body);
     } catch (err) {
       console.error("Error parsing request body:", err);
-      return res.status(400).json({ status: "error", message: "Invalid JSON in request body." });
+      return res
+        .status(400)
+        .json({ status: "error", message: "Invalid JSON in request body." });
     }
   }
   next();
@@ -83,7 +85,9 @@ app.get("/grocery-list", async (req, res) => {
   const user_id = req.query.user_id;
   if (!user_id) {
     console.error("Missing user_id parameter in GET /grocery-list request.");
-    return res.status(400).json({ status: "error", message: "Missing user_id parameter." });
+    return res
+      .status(400)
+      .json({ status: "error", message: "Missing user_id parameter." });
   }
   try {
     const query = "SELECT * FROM grocery_list WHERE user_id = $1";
@@ -108,38 +112,26 @@ app.get("/grocery-list", async (req, res) => {
 });
 
 // /grocery-list POST endpoint: Inserts or updates a grocery list record.
-// If the user_id is missing from the request body, fetch the most recent record from the DB,
-// assuming that it was created via the /generate-code endpoint.
+// Note: If the record exists, our ON CONFLICT clause updates the "items", "total_price", and "budget" fields.
+// Make sure the column names in your database match these names (items, total_price, budget).
 app.post("/grocery-list", async (req, res) => {
   console.log("Raw POST body:", req.body);
   const body = req.body;
-  let user_id = body.user_id || body.userId;
-
-  // If user_id is not provided by the client, fetch it from the DB.
-  if (!user_id) {
-    try {
-      // Here we assume that the most recently created record corresponds to the user.
-      // You may need to adjust this logic based on your application's needs.
-      const result = await pool.query("SELECT user_id FROM grocery_list ORDER BY created_at DESC LIMIT 1");
-      if (result.rowCount > 0) {
-        user_id = result.rows[0].user_id;
-        console.log("Fetched user_id from DB:", user_id);
-      } else {
-        // If no record exists, generate a new one.
-        user_id = await generateUserCodeInternal();
-        console.log("No existing record found. Generated new user_id:", user_id);
-      }
-    } catch (err) {
-      console.error("Error fetching user_id from DB:", err);
-      return res.status(500).json({ status: "error", message: "Error fetching user_id from DB" });
-    }
-  }
-  
+  const user_id = body.user_id || body.userId;
   const items = body.items;
   const total_price = body.total_price;
   const budget = body.budget;
-  
+
+  // Log the parsed request so we can verify the keys.
   console.log("Parsed POST body:", { user_id, items, total_price, budget });
+  
+  if (!user_id) {
+    return res.status(400).json({
+      status: "error",
+      message:
+        "Missing user_id in request body. Please use the user_id obtained from /generate-code.",
+    });
+  }
   
   const upsertQuery = `
     INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
@@ -153,6 +145,7 @@ app.post("/grocery-list", async (req, res) => {
   
   try {
     await pool.query(upsertQuery, [user_id, JSON.stringify(items), total_price, budget]);
+    console.log("Upsert successfully executed for user_id:", user_id);
     res.json({ status: "success", user_id });
   } catch (err) {
     console.error("Error upserting grocery list:", err);
