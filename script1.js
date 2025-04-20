@@ -281,34 +281,37 @@ document.addEventListener("DOMContentLoaded", () => {
 // Function to store a new user record
 async function storeUserRecord() {
   if (!currentUserCode) {
-    console.error("storeUserRecord called without a valid currentUserCode.");
+    console.error("storeUserRecord called with empty currentUserCode");
     return;
   }
+
+  // Build payload with proper structure
   const payload = {
     user_id: currentUserCode,
     items: [],
     total_price: 0,
-    budget: currentBudget
+    budget: currentBudget,
   };
 
-  console.log("Storing new user record for:", currentUserCode);
-  console.log("Payload:", JSON.stringify(payload));
+  console.log("Storing new user record with payload:", JSON.stringify(payload));
 
   try {
-    const response = await fetch("/.netlify/functions/app/grocery-list", {
+    const response = await fetch("https://groceryshoppingbot.netlify.app/.netlify/functions/app/grocery-list", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const data = await response.json(); // Always parse JSON response
 
     if (!response.ok) {
       console.error("storeUserRecord response not ok:", response.status, data);
       throw new Error(data.message || "Failed to store user record.");
     }
 
-    console.log("storeUserRecord stored:", data);
+    console.log("User record stored successfully:", data);
   } catch (err) {
     console.error("storeUserRecord error:", err);
   }
@@ -365,24 +368,33 @@ async function initializeUserCodeLoop() {
 }
 
 // Function to load the grocery list from the backend
-async function loadUserList(code) {
+async function loadUserList(userId) {
+  console.log("Fetching grocery list for user_id:", userId);
+
   try {
-    const response = await fetch("/.netlify/functions/app/grocery-list?user_id=" + encodeURIComponent(code));
+    const response = await fetch(
+      `https://groceryshoppingbot.netlify.app/.netlify/functions/app/grocery-list?user_id=${encodeURIComponent(userId)}`
+    );
+
+    if (!response.ok) {
+      console.error("loadUserList response not ok:", response.status);
+      throw new Error(`Failed to fetch grocery list: ${response.status}`);
+    }
+
     const data = await response.json();
 
-    if (response.ok && data.status === "success" && data.data && data.data.length > 0) {
+    if (data.status !== "success" || !data.data) {
+      console.warn("No grocery list found for user_id:", userId);
+      groceryList = [];
+      currentBudget = null;
+      totalPrice = 0;
+    } else {
       const record = data.data[0];
       groceryList = Array.isArray(record.items) ? record.items : JSON.parse(record.items || "[]");
       currentBudget = record.budget;
       totalPrice = record.total_price || 0;
 
-      budgetDisplay.textContent = currentBudget ? "$" + currentBudget : "Not set";
-      totalPriceDisplay.textContent = "$" + totalPrice;
-    } else {
-      console.warn("No existing grocery list found for user:", code);
-      groceryList = [];
-      currentBudget = null;
-      totalPrice = 0;
+      console.log("Fetched grocery list for user:", userId, groceryList);
     }
 
     renderGroceryList();
@@ -423,7 +435,7 @@ function publishGroceryList() {
     user: currentUserCode,
     list: groceryList,
     total_price: totalPrice,
-    budget: currentBudget
+    budget: currentBudget,
   });
 }
 
@@ -453,11 +465,8 @@ async function storeGroceryList() {
     budget: currentBudget,
   };
 
-  console.log("Storing grocery list for user:", currentUserCode);
-  console.log("Payload being sent to backend:", JSON.stringify(payload));
-
   try {
-    const response = await fetch("https://groceryshoppingbot.netlify.app/.netlify/functions/app/grocery-list", {
+    const response = await fetch("/.netlify/functions/app/grocery-list", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
