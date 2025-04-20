@@ -287,7 +287,7 @@ function storeUserRecord() {
   // Build payload with both keys.
   const payload = {
     user_id: currentUserCode,
-    userId: currentUserCode,
+    //userId: currentUserCode,
     items: [],
     total_price: 0,
     totalPrice: 0,
@@ -502,7 +502,7 @@ function storeGroceryList() {
   // Build payload with both property names.
   const payload = {
     user_id: currentUserCode,
-    userId: currentUserCode,
+    //userId: currentUserCode,
     items: groceryList,
     total_price: totalPrice,
     totalPrice: totalPrice,
