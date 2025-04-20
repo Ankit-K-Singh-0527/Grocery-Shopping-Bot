@@ -450,14 +450,17 @@ async function storeGroceryList() {
     user_id: currentUserCode,
     items: groceryList,
     total_price: totalPrice,
-    budget: currentBudget
+    budget: currentBudget,
   };
 
+  console.log("Storing grocery list for user:", currentUserCode);
+  console.log("Payload being sent to backend:", JSON.stringify(payload));
+
   try {
-    const response = await fetch("/.netlify/functions/app/grocery-list", {
+    const response = await fetch("https://groceryshoppingbot.netlify.app/.netlify/functions/app/grocery-list", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
