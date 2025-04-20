@@ -47,6 +47,15 @@
         transform: scale(1.05);
         transition: transform 0.3s ease-in-out;
       }
+      /* Styling for suggestion section */
+      .suggestion-item {
+        cursor: pointer;
+        padding: 0.5rem;
+        border-b: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .suggestion-item:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
     </style>
   </head>
   <body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 text-white min-h-screen flex items-center justify-center">
@@ -145,6 +154,8 @@
               Add
             </button>
           </div>
+          <!-- Suggestion Section -->
+          <div id="suggestionContainer" class="bg-gray-700 rounded-lg p-2 mb-4 max-h-48 overflow-y-auto"></div>
           <ul id="groceryList" class="list-disc pl-6"></ul>
           <!-- New Add to Cart Button -->
           <div class="mt-6">
@@ -230,6 +241,50 @@
         // Save updated cart to localStorage
         localStorage.setItem("cart", JSON.stringify(cart));
         showNotification("All grocery list items have been added to your cart!");
+      });
+      
+      // Predefined suggestion list of 15 common grocery items
+      const suggestionList = [
+        "Apple",
+        "Banana",
+        "Carrot",
+        "Bread",
+        "Milk",
+        "Eggs",
+        "Cheese",
+        "Orange",
+        "Tomato",
+        "Potato",
+        "Chicken",
+        "Beef",
+        "Rice",
+        "Pasta",
+        "Lettuce"
+      ];
+      
+      const itemInput = document.getElementById("itemInput");
+      const suggestionContainer = document.getElementById("suggestionContainer");
+      
+      // Display suggestions as user types
+      itemInput.addEventListener("input", () => {
+        const query = itemInput.value.trim().toLowerCase();
+        suggestionContainer.innerHTML = "";
+        if (query === "") {
+          return;
+        }
+        const filteredSuggestions = suggestionList.filter(item =>
+          item.toLowerCase().startsWith(query)
+        );
+        filteredSuggestions.forEach(suggestion => {
+          const suggestionDiv = document.createElement("div");
+          suggestionDiv.className = "suggestion-item";
+          suggestionDiv.textContent = suggestion;
+          suggestionDiv.addEventListener("click", () => {
+            itemInput.value = suggestion;
+            suggestionContainer.innerHTML = "";
+          });
+          suggestionContainer.appendChild(suggestionDiv);
+        });
       });
     </script>
   </body>
