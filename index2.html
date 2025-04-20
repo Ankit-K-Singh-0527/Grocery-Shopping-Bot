@@ -10,7 +10,7 @@
       @keyframes fadeInUp {
         from {
           opacity: 0;
-          transform: translateY(20px);
+          transform: translateY(30px);
         }
         to {
           opacity: 1;
@@ -18,29 +18,46 @@
         }
       }
       .animate-fadeInUp {
-        animation: fadeInUp 0.8s ease-out both;
+        animation: fadeInUp 1s ease-out both;
       }
       @keyframes pulseSlow {
         0%, 100% {
           opacity: 1;
         }
         50% {
-          opacity: 0.8;
+          opacity: 0.7;
         }
       }
       .animate-pulseSlow {
-        animation: pulseSlow 2s infinite;
+        animation: pulseSlow 2.5s infinite;
+      }
+      @keyframes scaleUp {
+        from {
+          transform: scale(0.95);
+        }
+        to {
+          transform: scale(1);
+        }
+      }
+      .animate-scaleUp {
+        animation: scaleUp 0.5s ease-in-out both;
+      }
+      /* Extra hover animations */
+      .hover-scale:hover {
+        transform: scale(1.05);
+        transition: transform 0.3s ease-in-out;
       }
     </style>
   </head>
   <body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 text-white min-h-screen flex items-center justify-center">
     <div class="container mx-auto p-6">
       <!-- Header & User Info (Horizontally aligned) -->
-      <div class="flex flex-col md:flex-row items-center justify-between bg-gradient-to-r from-blue-800 to-blue-600 shadow-2xl rounded-lg p-6 mb-6 animate-fadeInUp">
+      <div class="flex flex-col md:flex-row items-center justify-between bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 shadow-2xl rounded-lg p-6 mb-6 animate-fadeInUp hover-scale">
         <div class="mb-4 md:mb-0">
           <h1 class="text-4xl font-bold">Grocery List Collaboration</h1>
           <p class="text-lg">
-            Your Unique Code: <span id="userCode" class="font-bold text-yellow-300"></span>
+            Your Unique Code:
+            <span id="userCode" class="font-bold text-yellow-300 animate-scaleUp"></span>
           </p>
         </div>
         <!-- Connect Section horizontally aligned -->
@@ -61,20 +78,19 @@
       </div>
 
       <!-- Budget & Price Section (Horizontally aligned) -->
-      <div class="flex flex-col md:flex-row items-center justify-between bg-gradient-to-r from-indigo-800 to-indigo-600 shadow-xl rounded-lg p-6 mb-6 animate-fadeInUp">
+      <div class="flex flex-col md:flex-row items-center justify-between bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-700 shadow-xl rounded-lg p-6 mb-6 animate-fadeInUp hover-scale">
         <div class="flex flex-col gap-2">
           <p class="text-lg">
-            <strong>Budget:</strong> <span id="budgetDisplay" class="text-yellow-300">Not Set</span>
+            <strong>Budget:</strong> <span id="budgetDisplay" class="text-yellow-300 animate-scaleUp">Not Set</span>
           </p>
           <p class="text-lg">
-            <strong>Total Price:</strong> <span id="totalPriceDisplay" class="text-yellow-300">$0</span>
+            <strong>Total Price:</strong> <span id="totalPriceDisplay" class="text-yellow-300 animate-scaleUp">$0</span>
           </p>
         </div>
-        <!-- Modal Trigger doesn't change id/class so leaving a separate modal below -->
       </div>
 
       <!-- Set Budget Inline Section (Horizontally aligned) -->
-      <div class="flex flex-col sm:flex-row gap-4 items-center mb-6 animate-fadeInUp">
+      <div class="flex flex-col sm:flex-row gap-4 items-center mb-6 animate-fadeInUp hover-scale">
         <input
           id="budgetInput"
           type="number"
@@ -91,7 +107,7 @@
 
       <!-- Modal for Budget (Centered and animated) -->
       <div id="budgetModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeInUp">
-        <div class="bg-gradient-to-r from-green-800 to-green-600 p-6 rounded-lg shadow-2xl">
+        <div class="bg-gradient-to-r from-green-900 via-green-800 to-green-700 p-6 rounded-lg shadow-2xl">
           <h2 class="text-xl font-bold mb-4">Set Your Budget</h2>
           <input
             id="budgetInputModal"
@@ -113,7 +129,7 @@
       <!-- Main Content: Grocery List & Updated List arranged in two columns -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeInUp">
         <!-- Grocery List Section -->
-        <div class="bg-gradient-to-r from-gray-700 to-gray-600 shadow-xl rounded-lg p-6">
+        <div class="bg-gradient-to-r from-gray-800 via-gray-700 to-gray-600 shadow-xl rounded-lg p-6 hover-scale">
           <h2 class="text-2xl font-bold mb-4">Grocery List</h2>
           <div class="flex mb-4">
             <input
@@ -135,7 +151,7 @@
         </div>
 
         <!-- Updated List Section -->
-        <div class="bg-gradient-to-r from-teal-700 to-teal-600 shadow-xl rounded-lg p-6">
+        <div class="bg-gradient-to-r from-teal-800 via-teal-700 to-teal-600 shadow-xl rounded-lg p-6 hover-scale">
           <h2 class="text-2xl font-bold mb-4">Updated List</h2>
           <ul id="updatedList" class="list-disc pl-6">
             <!-- Updated list from other users will be displayed here -->
