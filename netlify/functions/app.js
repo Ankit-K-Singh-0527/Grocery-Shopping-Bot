@@ -54,14 +54,18 @@ app.get("/generate-code", async (req, res) => {
 });
 
 // /grocery-list GET endpoint: retrieves the grocery list for a given user.
+// /grocery-list GET endpoint: retrieves the grocery list for a given user.
 app.get("/grocery-list", async (req, res) => {
-  const userId = req.query.user_id;
-  if (!userId) {
-    return res.status(400).json({ status: "error", message: "Missing userId parameter." });
+  console.log("GET /grocery-list query parameters:", req.query);
+  const user_id = req.query.user_id;
+  if (!user_id) {
+    console.error("Missing user_id parameter in GET /grocery-list request.");
+    return res.status(400).json({ status: "error", message: "Missing user_id parameter." });
   }
   try {
     const query = "SELECT * FROM grocery_list WHERE user_id = $1";
-    const result = await pool.query(query, [userId]);
+    const result = await pool.query(query, [user_id]);
+    console.log(`Found ${result.rowCount} record(s) for user_id ${user_id}`);
     res.json({ status: "success", data: result.rows });
   } catch (err) {
     console.error("Error fetching grocery list:", err);
