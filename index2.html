@@ -137,8 +137,8 @@
 
       <!-- Main Content: Grocery List & Updated List arranged in two columns -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeInUp">
-        <!-- Grocery List Section -->
-        <div class="bg-gradient-to-r from-gray-800 via-gray-700 to-gray-600 shadow-xl rounded-lg p-6 hover-scale">
+        <!-- Grocery List Section with new animated background -->
+        <div class="bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 shadow-xl rounded-lg p-6 hover-scale transition-all duration-500">
           <h2 class="text-2xl font-bold mb-4">Grocery List</h2>
           <div class="flex mb-4">
             <input
@@ -165,8 +165,8 @@
           </div>
         </div>
 
-        <!-- Updated List Section -->
-        <div class="bg-gradient-to-r from-teal-800 via-teal-700 to-teal-600 shadow-xl rounded-lg p-6 hover-scale">
+        <!-- Updated List Section with new animated background -->
+        <div class="bg-gradient-to-r from-indigo-500 via-blue-500 to-purple-500 shadow-xl rounded-lg p-6 hover-scale transition-all duration-500">
           <h2 class="text-2xl font-bold mb-4">Updated List</h2>
           <ul id="updatedList" class="list-disc pl-6"></ul>
           <div id="mergeDiscardButtons" class="hidden flex space-x-4 mt-4">
@@ -243,7 +243,17 @@
         showNotification("All grocery list items have been added to your cart!");
       });
       
+      // Handle budget setting with a pop-up notification instead of alert
+      document.getElementById("saveBudgetButton").addEventListener("click", () => {
+        const budgetValue = document.getElementById("budgetInput").value;
+        if (budgetValue !== "") {
+          document.getElementById("budgetDisplay").textContent = budgetValue;
+          showNotification("Budget has been set to $" + budgetValue + "!");
+        }
+      });
+      
       // Predefined suggestion groups with 15-20 different groups
+      // Each key represents an item and the array holds suggestions related to that group
       const suggestionGroups = {
         "milk": ["cheese", "bread", "butter"],
         "mango": ["orange", "banana", "pineapple"],
@@ -261,7 +271,10 @@
         "tea": ["lemon", "honey", "mint"],
         "water": ["lemon", "ice", "mint leaves"],
         "burger": ["cheese", "lettuce", "tomato"],
-        "pizza": ["pepperoni", "mushroom", "olives"]
+        "pizza": ["pepperoni", "mushroom", "olives"],
+        "mushroom": ["cream", "garlic", "parsley"],
+        "oats": ["honey", "banana", "almonds"],
+        "sugar": ["cinnamon", "vanilla", "butter"]
       };
       
       const itemInput = document.getElementById("itemInput");
@@ -275,18 +288,15 @@
           return;
         }
         let suggestions = [];
-        // Check for exact match
         if (suggestionGroups.hasOwnProperty(query)) {
           suggestions = suggestionGroups[query];
         } else {
-          // Collect suggestions from keys that start with the query
           for (const key in suggestionGroups) {
             if (key.startsWith(query)) {
               suggestions = suggestions.concat(suggestionGroups[key]);
             }
           }
         }
-        // Remove duplicates if any
         suggestions = [...new Set(suggestions)];
         suggestions.forEach(suggestion => {
           const suggestionDiv = document.createElement("div");
