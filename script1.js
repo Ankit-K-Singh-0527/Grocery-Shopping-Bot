@@ -96,12 +96,12 @@ function renderGroceryList() {
         alert("Duplicate item! This item is already in your grocery list.");
         return;
       }
-      // const newPriceInput = prompt("Enter new price for the item:", item.price);
-      // const newPrice = parseFloat(newPriceInput);
-      // if (isNaN(newPrice) || newPrice <= 0) {
-      //   alert("Please enter a valid price.");
-      //   return;
-      // }
+      const newPriceInput = prompt("Enter new price for the item:", item.price);
+      const newPrice = parseFloat(newPriceInput);
+      if (isNaN(newPrice) || newPrice <= 0) {
+        alert("Please enter a valid price.");
+        return;
+      }
       // Update the item
       groceryList[index] = { name: newName, price: newPrice };
       totalPrice = groceryList.reduce((sum, item) => sum + item.price, 0);
