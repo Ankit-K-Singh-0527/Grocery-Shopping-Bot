@@ -288,7 +288,7 @@ function storeUserRecord() {
   const payload = {
     user_id: currentUserCode,  // must be 'user_id'
     items: [],
-    total_price: 0,            // use 'total_price' instead of 'totalPrice'
+    total_price: 0,            // use 'total_price'
     budget: currentBudget
   };
   console.log("Storing new user record for:", currentUserCode);
@@ -318,7 +318,7 @@ async function initializeUserCodeLoop() {
     let code = prompt("Enter your unique code (leave blank if new):");
     if (code && code.trim() !== "") {
       try {
-        // Use 'user_id' instead of 'userId' in the query string.
+        // Use 'user_id' in the query string.
         const response = await fetch("/.netlify/functions/app/grocery-list?user_id=" + encodeURIComponent(code.trim()));
         const data = await response.json();
         console.log("Check code response:", data);
@@ -503,7 +503,7 @@ function storeGroceryList() {
   const payload = {
     user_id: currentUserCode,       // key must be 'user_id'
     items: groceryList,
-    total_price: totalPrice,        // use 'total_price' instead of 'totalPrice'
+    total_price: totalPrice,        // use 'total_price'
     budget: currentBudget
   };
   console.log("Storing grocery list for user:", currentUserCode);
