@@ -172,6 +172,22 @@
     <script src="https://cdn.jsdelivr.net/npm/ably/browser/static/ably.min.js"></script>
     <script src="script1.js"></script>
     <script>
+      // New pop-up notification function (toast style)
+      function showNotification(message) {
+        const notification = document.createElement("div");
+        notification.className =
+          "fixed top-6 right-6 bg-green-500 text-white px-4 py-2 rounded shadow-lg animate-fadeInUp z-50";
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        // Remove notification after 3 seconds with fade-out effect
+        setTimeout(() => {
+          notification.classList.add("opacity-0", "transition", "duration-500");
+          setTimeout(() => {
+            notification.remove();
+          }, 500);
+        }, 3000);
+      }
+      
       /* 
       New functionality: When "Add All Items to Cart" is clicked, all items from the grocery list 
       are sent to localStorage as cart items after fetching details from the Open Food API.
@@ -179,7 +195,7 @@
       document.getElementById("addToCartButton").addEventListener("click", async () => {
         // Assume groceryList is a global array of item names managed in script1.js
         if (typeof groceryList === "undefined" || groceryList.length === 0) {
-          alert("No items in grocery list to add to cart!");
+          showNotification("No items in grocery list to add to cart!");
           return;
         }
         
@@ -213,7 +229,7 @@
         
         // Save updated cart to localStorage
         localStorage.setItem("cart", JSON.stringify(cart));
-        alert("All grocery list items have been added to your cart!");
+        showNotification("All grocery list items have been added to your cart!");
       });
     </script>
   </body>
