@@ -54,7 +54,6 @@ app.get("/generate-code", async (req, res) => {
 });
 
 // /grocery-list GET endpoint: retrieves the grocery list for a given user.
-// /grocery-list GET endpoint: retrieves the grocery list for a given user.
 app.get("/grocery-list", async (req, res) => {
   console.log("GET /grocery-list query parameters:", req.query);
   const user_id = req.query.user_id;
@@ -66,7 +65,20 @@ app.get("/grocery-list", async (req, res) => {
     const query = "SELECT * FROM grocery_list WHERE user_id = $1";
     const result = await pool.query(query, [user_id]);
     console.log(`Found ${result.rowCount} record(s) for user_id ${user_id}`);
-    res.json({ status: "success", data: result.rows });
+    
+    // Parse the items JSON string into an array before sending the response.
+    const rows = result.rows.map(row => {
+      try {
+        row.items = JSON.parse(row.items);
+      } catch (e) {
+        console.error("Error parsing items for user:", row.user_id, e);
+      }
+      // Convert total_price to a number if necessary.
+      row.total_price = Number(row.total_price);
+      return row;
+    });
+
+    res.json({ status: "success", data: rows });
   } catch (err) {
     console.error("Error fetching grocery list:", err);
     res.status(500).json({ status: "error", message: err.message });
