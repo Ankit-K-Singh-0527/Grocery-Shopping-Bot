@@ -256,7 +256,7 @@ const budgetInput = document.getElementById("budgetInput");
 const budgetDisplay = document.getElementById("budgetDisplay");
 const totalPriceDisplay = document.getElementById("totalPriceDisplay");
 
-// Elements for receiving updates from other users
+// Elements for receiving updates
 const updatedListEl = document.getElementById("updatedList");
 const mergeDiscardButtons = document.getElementById("mergeDiscardButtons");
 const mergeListButton = document.getElementById("mergeListButton");
@@ -266,24 +266,38 @@ const discardListButton = document.getElementById("discardListButton");
 const connectInputEl = document.getElementById("connectInput");
 const connectButton = document.getElementById("connectButton");
 
-// Initialize when the DOM is fully loaded
+// Ensure that all event registrations occur once DOM is fully loaded.
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOMContentLoaded fired");
-  initializeUserCodeLoop(); // Initialize current user
+  
+  // Initialize user code and load list from backend.
+  initializeUserCodeLoop();
+
+  // Attach event listener for Add Item button
+  const addItemButton = document.getElementById("addItemButton");
+  addItemButton.addEventListener("click", () => {
+    const itemInputEl = document.getElementById("itemInput");
+    const item = itemInputEl.value.trim();
+    if (item) {
+      addItemToList(item);
+      itemInputEl.value = "";
+    } else {
+      alert("Please enter an item name.");
+    }
+  });
 });
 
-// Function to initialize or validate the user code using a loop with retry logic.
+// Function to initialize or validate the user code using retry logic.
 async function initializeUserCodeLoop() {
   let codeSet = false;
   while (!codeSet) {
     console.log("Initializing user code...");
     alert("A prompt will ask for your unique code. Click OK to continue.");
     
-    // Prompt the user for a code; if blank, a new code will be generated.
+    // Prompt the user for a code; if left blank, we generate a new code.
     let code = prompt("Enter your unique code (leave blank if new):");
     if (code && code.trim() !== "") {
       try {
-        // Check if the provided code exists in the backend.
         const response = await fetch("/.netlify/functions/app/grocery-list?userId=" + encodeURIComponent(code.trim()));
         const data = await response.json();
         console.log("Check code response:", data);
@@ -299,7 +313,7 @@ async function initializeUserCodeLoop() {
       }
     } else {
       try {
-        // No code entered, generate a new unique code.
+        // Generate a new code if none was provided.
         const response = await fetch("/.netlify/functions/app/generate-code");
         const data = await response.json();
         console.log("Generate code response:", data);
@@ -316,12 +330,12 @@ async function initializeUserCodeLoop() {
       }
     }
   }
-  // Display the unique code on the page.
+  // Display the user code and load stored list
   userCodeDisplay.textContent = currentUserCode;
   loadUserList(currentUserCode);
 }
 
-// Function to load the grocery list from the backend using the current user code.
+// Function to load the grocery list from the backend
 function loadUserList(code) {
   fetch("/.netlify/functions/app/grocery-list?userId=" + encodeURIComponent(code))
     .then(response => response.json())
@@ -341,7 +355,7 @@ function loadUserList(code) {
         }
         totalPriceDisplay.textContent = "$" + totalPrice;
       } else {
-        // No record exists; initialize with an empty list.
+        // Initialize if no data exists.
         groceryList = [];
         currentBudget = null;
         totalPrice = 0;
@@ -361,7 +375,6 @@ function loadUserList(code) {
 document.getElementById("closeBudgetButton").addEventListener("click", () => {
   budgetModal.classList.add("hidden");
 });
-
 document.getElementById("saveBudgetButton").addEventListener("click", () => {
   const budget = parseFloat(budgetInput.value);
   if (!isNaN(budget) && budget > 0) {
@@ -374,7 +387,6 @@ document.getElementById("saveBudgetButton").addEventListener("click", () => {
   budgetModal.classList.add("hidden");
   storeGroceryList();
 });
-
 document.getElementById("openBudgetButton").addEventListener("click", () => {
   budgetModal.classList.toggle("hidden");
 });
@@ -386,7 +398,7 @@ function addItemToList(item) {
     alert("Duplicate item!");
     return;
   }
-  const price = Math.floor(Math.random() * 20) + 1;
+  const price = Math.floor(Math.random() * 20) + 1; // Random price generation.
   groceryList.push({ name: item, price });
   totalPrice += price;
   totalPriceDisplay.textContent = "$" + totalPrice;
@@ -415,13 +427,10 @@ function renderGroceryList() {
   groceryListEl.innerHTML = "";
   groceryList.forEach((item, index) => {
     const li = document.createElement("li");
-    
-    // Display item details.
     const itemSpan = document.createElement("span");
     itemSpan.textContent = item.name + " - $" + item.price + " ";
     li.appendChild(itemSpan);
-    
-    // Edit button.
+    // Edit button for each item.
     const editButton = document.createElement("button");
     editButton.textContent = "Edit";
     editButton.style.marginRight = "5px";
@@ -429,8 +438,10 @@ function renderGroceryList() {
       const newName = prompt("Enter new name:", item.name);
       if (!newName) return;
       const normalizedNew = newName.toLowerCase();
-      if (normalizedNew !== item.name.toLowerCase() &&
-          groceryList.some(e => e.name.toLowerCase() === normalizedNew)) {
+      if (
+        normalizedNew !== item.name.toLowerCase() &&
+        groceryList.some(e => e.name.toLowerCase() === normalizedNew)
+      ) {
         alert("Duplicate item!");
         return;
       }
@@ -440,8 +451,7 @@ function renderGroceryList() {
       storeGroceryList();
     });
     li.appendChild(editButton);
-    
-    // Delete button.
+    // Delete button for each item.
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "Delete";
     deleteButton.addEventListener("click", () => {
@@ -453,19 +463,9 @@ function renderGroceryList() {
       storeGroceryList();
     });
     li.appendChild(deleteButton);
-    
     groceryListEl.appendChild(li);
   });
 }
-
-document.getElementById("addItemButton").addEventListener("click", () => {
-  const itemInputEl = document.getElementById("itemInput");
-  const item = itemInputEl.value.trim();
-  if (item) {
-    addItemToList(item);
-    itemInputEl.value = "";
-  }
-});
 
 // Function to persist the grocery list to the backend.
 function storeGroceryList() {
@@ -485,9 +485,9 @@ function storeGroceryList() {
     .catch(err => console.error("Store error:", err));
 }
 
-// Ably subscription: receive list updates from other users.
+// Ably subscription to receive updates from other users.
 channel.subscribe("list-updated", (message) => {
-  // If this update is intended for us, display in "updatedList" section.
+  // If the update is meant for this user, show in the updatedList section.
   if (message.data.connectedUsers && message.data.connectedUsers.includes(currentUserCode)) {
     updatedListEl.innerHTML = "";
     message.data.list.forEach(item => {
@@ -497,13 +497,13 @@ channel.subscribe("list-updated", (message) => {
     });
     mergeDiscardButtons.classList.remove("hidden");
   }
-  // Forward the update if our code is not yet in the path.
+  // Forward the update if not already in the path.
   if (!message.data.path || !message.data.path.includes(currentUserCode)) {
     forwardUpdate(message);
   }
 });
 
-// Function to forward received updates to connected users who haven't yet received them.
+// Helper to forward updates to connected users.
 function forwardUpdate(message) {
   let forwardedPath = message.data.path ? [...message.data.path] : [message.data.user];
   if (!forwardedPath.includes(currentUserCode)) {
@@ -521,7 +521,7 @@ function forwardUpdate(message) {
   }
 }
 
-// Function to merge two lists without duplicating items.
+// Merge two lists without duplicate items.
 function mergeLists(list1, list2) {
   const merged = [...list1];
   list2.forEach(item2 => {
@@ -532,9 +532,8 @@ function mergeLists(list1, list2) {
   return merged;
 }
 
-// Merge/discard buttons actions for updates received from others.
+// Merge/discard updates received from other users.
 mergeListButton.addEventListener("click", () => {
-  // Parse updated list items (expected format "name - $price")
   const incomingList = Array.from(updatedListEl.childNodes).map(li => {
     const parts = li.textContent.split(" - $");
     return { name: parts[0].trim(), price: Number(parts[1]) };
@@ -547,7 +546,6 @@ mergeListButton.addEventListener("click", () => {
   mergeDiscardButtons.classList.add("hidden");
   storeGroceryList();
 });
-
 discardListButton.addEventListener("click", () => {
   updatedListEl.innerHTML = "";
   mergeDiscardButtons.classList.add("hidden");
@@ -567,7 +565,6 @@ connectButton.addEventListener("click", () => {
     alert("Please enter a valid user code to connect.");
   }
 });
-
 channel.subscribe("connect-request", (message) => {
   if (message.data.target === currentUserCode) {
     connectedUsers.add(message.data.user);
@@ -575,7 +572,6 @@ channel.subscribe("connect-request", (message) => {
       user: currentUserCode,
       target: message.data.user
     });
-    // Initialize sharing list on connect.
     channel.publish("list-updated", {
       user: currentUserCode,
       type: "initial",
@@ -585,7 +581,6 @@ channel.subscribe("connect-request", (message) => {
     });
   }
 });
-
 channel.subscribe("connect-back", (message) => {
   if (message.data.target === currentUserCode) {
     connectedUsers.add(message.data.user);
