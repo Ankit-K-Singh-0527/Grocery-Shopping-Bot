@@ -289,7 +289,7 @@ function storeUserRecord() {
     user_id: currentUserCode,
     //userId: currentUserCode,
     items: [],
-    total_price: 0,
+   // total_price: 0,
     totalPrice: 0,
     budget: currentBudget
   };

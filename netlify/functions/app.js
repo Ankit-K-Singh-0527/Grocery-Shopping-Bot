@@ -12,8 +12,6 @@ const pool = new Pool({
 });
 
 const app = express();
-
-// Use the built-in JSON parser
 app.use(express.json());
 
 // Middleware to strip Netlify function prefix from the URL.
@@ -24,7 +22,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// /generate-code endpoint: generates a unique user code.
+// /generate-code endpoint: generates a unique user code and stores it in the DB.
 app.get("/generate-code", async (req, res) => {
   try {
     let code = "";
@@ -35,6 +33,12 @@ app.get("/generate-code", async (req, res) => {
         const checkQuery = "SELECT * FROM grocery_list WHERE user_id = $1";
         const result = await pool.query(checkQuery, [code]);
         if (result.rowCount === 0) {
+          // Insert a new record with the generated code.
+          const insertQuery = `
+            INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
+            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+          `;
+          await pool.query(insertQuery, [code, JSON.stringify([]), 0, null]);
           return res.json({ status: "success", code });
         }
       } catch (dbError) {
@@ -67,10 +71,6 @@ app.get("/grocery-list", async (req, res) => {
 
 // /grocery-list POST endpoint: inserts or updates a grocery list record.
 app.post("/grocery-list", async (req, res) => {
-  // Debug: log the raw body received
-  console.log("POST /grocery-list received body:", req.body);
-
-  // Use only user_id (keep it simple)
   const user_id = req.body.user_id;
   const items = req.body.items;
   const total_price = req.body.total_price;
@@ -80,7 +80,6 @@ app.post("/grocery-list", async (req, res) => {
     return res.status(400).json({ status: "error", message: "Missing user_id in request body." });
   }
   
-  // Create the upsert query
   const upsertQuery = `
     INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
     VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
