@@ -239,7 +239,7 @@
 // Frontend JavaScript Code
 
 // Ably Initialization
-const ably = new Ably.Realtime("YOUR_ABLY_API_KEY");
+const ably = new Ably.Realtime("QFP-Dw.p_WLfg:ilu2PzKHJR1Tn14Pl6l1-kO0RcoqK3-_NsXV8U8PjXk"); // replace with your Ably API key
 const channel = ably.channels.get("grocery-list-channel");
 
 // Global variables
@@ -271,55 +271,62 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Function to initialize user code
+// Function to initialize user code: if user enters an existing code, we check it in the DB; else we generate one.
 async function initializeUserCodeLoop() {
   let codeSet = false;
-
   while (!codeSet) {
     const userInput = prompt("Enter your unique code (leave blank to generate a new one):");
-
     if (userInput && userInput.trim()) {
+      // Check if the entered code exists in the DB
       try {
         const response = await fetch(`/grocery-list?user_id=${encodeURIComponent(userInput.trim())}`);
         if (response.ok) {
           const data = await response.json();
-          if (data.status === "success" && data.data.length > 0) {
+          if (data.status === "success" && data.data && data.data.length > 0) {
             currentUserCode = userInput.trim();
             codeSet = true;
           } else {
-            alert("Code not found. Please try again.");
+            alert("Code not found. Please try again or leave blank to generate a new one.");
           }
         } else if (response.status === 404) {
-          alert("Code does not exist. Please try again.");
+          alert("Code does not exist. Please try again or leave blank to generate a new one.");
         } else {
-          throw new Error("Error checking code.");
+          console.error("Error checking code: ", response.status);
+          alert("Error checking code. Please try again.");
         }
       } catch (error) {
         console.error("Error checking code:", error);
+        alert("Error checking code. Please try again.");
       }
     } else {
+      // Generate new code
       try {
         const response = await fetch("/generate-code");
+        if (!response.ok) {
+          throw new Error(`Status: ${response.status}`);
+        }
         const data = await response.json();
         if (data.status === "success" && data.code) {
           currentUserCode = data.code;
           alert(`Generated new user code: ${currentUserCode}`);
           codeSet = true;
         } else {
-          throw new Error("Error generating user code.");
+          throw new Error("Error generating code.");
         }
       } catch (error) {
         console.error("Error generating code:", error);
+        alert("Error generating code. Please try again.");
       }
     }
   }
-
   userCodeDisplay.textContent = currentUserCode;
+  console.log(`User code set to: ${currentUserCode}`);
+  // Store record for new user if not exists (this makes sure a row exists in the DB)
   await storeUserRecord();
   await loadUserList();
 }
 
-// Function to store a new user record
+// Function to store a new user record (or create the row if it doesn't exist)
 async function storeUserRecord() {
   const payload = {
     user_id: currentUserCode,
@@ -327,57 +334,66 @@ async function storeUserRecord() {
     total_price: 0,
     budget: null
   };
-
   try {
     const response = await fetch("/grocery-list", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-    if (!response.ok) throw new Error("Failed to store user record.");
+    if (!response.ok) {
+      const errMsg = await response.text();
+      throw new Error(errMsg);
+    }
+    console.log("User record stored successfully.");
   } catch (error) {
     console.error("Error storing user record:", error.message);
   }
 }
 
-// Function to load the grocery list
+// Function to load the grocery list from the backend
 async function loadUserList() {
   try {
     const response = await fetch(`/grocery-list?user_id=${encodeURIComponent(currentUserCode)}`);
     if (response.ok) {
       const data = await response.json();
-      if (data.status === "success" && data.data.length > 0) {
+      if (data.status === "success" && data.data && data.data.length > 0) {
         const record = data.data[0];
+        // Items may already be stored as a JSON array or stringified JSON
         groceryList = Array.isArray(record.items) ? record.items : JSON.parse(record.items || "[]");
         currentBudget = record.budget;
         totalPrice = record.total_price || 0;
-
         renderGroceryList();
+      } else {
+        console.warn("No grocery list found for user.");
       }
     } else {
-      console.warn("No grocery list found for user.");
+      console.warn("Failed to load grocery list. Status:", response.status);
     }
   } catch (error) {
     console.error("Error loading grocery list:", error.message);
   }
 }
 
-// Function to render the grocery list
+// Function to render the grocery list in the DOM
 function renderGroceryList() {
   groceryListEl.innerHTML = "";
-  groceryList.forEach(item => {
+  groceryList.forEach((item) => {
     const li = document.createElement("li");
     li.textContent = `${item.name} - $${item.price}`;
     groceryListEl.appendChild(li);
   });
-
   budgetDisplay.textContent = currentBudget ? `$${currentBudget}` : "Not Set";
   totalPriceDisplay.textContent = `$${totalPrice}`;
 }
 
 // Function to add an item to the grocery list
 function addItemToList(itemName) {
-  const price = Math.floor(Math.random() * 20) + 1;
+  // Prevent duplicate items (case insensitive)
+  if (groceryList.find((item) => item.name.toLowerCase() === itemName.toLowerCase())) {
+    alert("This item is already in the list.");
+    return;
+  }
+  const price = Math.floor(Math.random() * 20) + 1; // Random price between 1 and 20
   groceryList.push({ name: itemName, price });
   totalPrice += price;
   renderGroceryList();
@@ -392,14 +408,17 @@ async function storeGroceryList() {
     total_price: totalPrice,
     budget: currentBudget
   };
-
   try {
     const response = await fetch("/grocery-list", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-    if (!response.ok) throw new Error("Failed to store grocery list.");
+    if (!response.ok) {
+      const errMsg = await response.text();
+      throw new Error(errMsg);
+    }
+    console.log("Grocery list stored successfully.");
   } catch (error) {
     console.error("Error storing grocery list:", error.message);
   }
