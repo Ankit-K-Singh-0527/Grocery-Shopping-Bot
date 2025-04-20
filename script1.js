@@ -284,11 +284,10 @@ function storeUserRecord() {
     console.error("storeUserRecord called without a valid currentUserCode.");
     return;
   }
-  // Build payload using the correct keys.
   const payload = {
-    user_id: currentUserCode,  // must be 'user_id'
+    user_id: currentUserCode,
     items: [],
-    total_price: 0,            // use 'total_price'
+    total_price: 0,
     budget: currentBudget
   };
   console.log("Storing new user record for:", currentUserCode);
@@ -314,11 +313,9 @@ async function initializeUserCodeLoop() {
   while (!codeSet) {
     console.log("Initializing user code...");
     alert("A prompt will ask for your unique code. Click OK to continue.");
-    // Prompt the user for a code; if left blank, we generate a new code.
     let code = prompt("Enter your unique code (leave blank if new):");
     if (code && code.trim() !== "") {
       try {
-        // Use 'user_id' in the query string.
         const response = await fetch("/.netlify/functions/app/grocery-list?user_id=" + encodeURIComponent(code.trim()));
         const data = await response.json();
         console.log("Check code response:", data);
@@ -334,7 +331,6 @@ async function initializeUserCodeLoop() {
       }
     } else {
       try {
-        // Generate a new code if none was provided.
         const response = await fetch("/.netlify/functions/app/generate-code");
         const data = await response.json();
         console.log("Generate code response:", data);
@@ -351,18 +347,14 @@ async function initializeUserCodeLoop() {
       }
     }
   }
-  // Display the user code in the UI.
   userCodeDisplay.textContent = currentUserCode;
   console.log("User code set to:", currentUserCode);
-  // Immediately store a new user record into the database.
   storeUserRecord();
-  // Then load the user's grocery list (should be empty initially).
   loadUserList(currentUserCode);
 }
 
 // Function to load the grocery list from the backend.
 function loadUserList(code) {
-  // Use 'user_id' in the query string.
   fetch("/.netlify/functions/app/grocery-list?user_id=" + encodeURIComponent(code))
     .then(response => response.json())
     .then(data => {
@@ -423,7 +415,6 @@ function addItemToList(item) {
     alert("Duplicate item!");
     return;
   }
-  // Generate a random price.
   const price = Math.floor(Math.random() * 20) + 1;
   groceryList.push({ name: item, price });
   totalPrice += price;
@@ -436,74 +427,16 @@ function addItemToList(item) {
   storeGroceryList();
 }
 
-// Function to publish the updated grocery list via Ably.
-function publishGroceryList() {
-  channel.publish("list-updated", {
-    user: currentUserCode,
-    type: "update",
-    list: groceryList,
-    connectedUsers: Array.from(connectedUsers),
-    path: [currentUserCode]
-  });
-}
-
-// Function to render the grocery list on the UI.
-function renderGroceryList() {
-  const groceryListEl = document.getElementById("groceryList");
-  groceryListEl.innerHTML = "";
-  groceryList.forEach((item, index) => {
-    const li = document.createElement("li");
-    const itemSpan = document.createElement("span");
-    itemSpan.textContent = item.name + " - $" + item.price + " ";
-    li.appendChild(itemSpan);
-    // Edit button.
-    const editButton = document.createElement("button");
-    editButton.textContent = "Edit";
-    editButton.style.marginRight = "5px";
-    editButton.addEventListener("click", () => {
-      const newName = prompt("Enter new name:", item.name);
-      if (!newName) return;
-      const normalizedNew = newName.toLowerCase();
-      if (
-        normalizedNew !== item.name.toLowerCase() &&
-        groceryList.some(e => e.name.toLowerCase() === normalizedNew)
-      ) {
-        alert("Duplicate item!");
-        return;
-      }
-      groceryList[index].name = newName;
-      renderGroceryList();
-      publishGroceryList();
-      storeGroceryList();
-    });
-    li.appendChild(editButton);
-    // Delete button.
-    const deleteButton = document.createElement("button");
-    deleteButton.textContent = "Delete";
-    deleteButton.addEventListener("click", () => {
-      groceryList.splice(index, 1);
-      totalPrice = groceryList.reduce((sum, itm) => sum + itm.price, 0);
-      totalPriceDisplay.textContent = "$" + totalPrice;
-      renderGroceryList();
-      publishGroceryList();
-      storeGroceryList();
-    });
-    li.appendChild(deleteButton);
-    groceryListEl.appendChild(li);
-  });
-}
-
 // Function to persist the grocery list to the backend.
 function storeGroceryList() {
   if (!currentUserCode) {
     console.error("storeGroceryList called with empty currentUserCode");
     return;
   }
-  // Build payload with the correct key names.
   const payload = {
-    user_id: currentUserCode,       // key must be 'user_id'
+    user_id: currentUserCode,
     items: groceryList,
-    total_price: totalPrice,        // use 'total_price'
+    total_price: totalPrice,
     budget: currentBudget
   };
   console.log("Storing grocery list for user:", currentUserCode);
@@ -523,155 +456,13 @@ function storeGroceryList() {
     .catch(err => console.error("storeGroceryList error:", err));
 }
 
-// Ably subscription to receive updates from other users.
-channel.subscribe("list-updated", (message) => {
-  if (
-    message.data.connectedUsers &&
-    message.data.connectedUsers.includes(currentUserCode)
-  ) {
-    updatedListEl.innerHTML = "";
-    message.data.list.forEach(item => {
-      const li = document.createElement("li");
-      li.textContent = `${item.name} - $${item.price}`;
-      updatedListEl.appendChild(li);
-    });
-    mergeDiscardButtons.classList.remove("hidden");
-  }
-  if (!message.data.path || !message.data.path.includes(currentUserCode)) {
-    forwardUpdate(message);
-  }
-});
-
-// Helper to forward updates.
-function forwardUpdate(message) {
-  let forwardedPath = message.data.path ? [...message.data.path] : [message.data.user];
-  if (!forwardedPath.includes(currentUserCode)) {
-    forwardedPath.push(currentUserCode);
-  }
-  const targetUsers = Array.from(connectedUsers).filter(u => !forwardedPath.includes(u));
-  if (targetUsers.length > 0) {
-    channel.publish("list-updated", {
-      user: message.data.user,
-      type: message.data.type,
-      list: message.data.list,
-      connectedUsers: targetUsers,
-      path: forwardedPath
-    });
-  }
-}
-
-// Merge two lists without duplicates.
-function mergeLists(list1, list2) {
-  const merged = [...list1];
-  list2.forEach(item2 => {
-    if (!merged.some(item1 => item1.name.toLowerCase() === item2.name.toLowerCase())) {
-      merged.push(item2);
-    }
+// Function to render the grocery list on the UI.
+function renderGroceryList() {
+  const groceryListEl = document.getElementById("groceryList");
+  groceryListEl.innerHTML = "";
+  groceryList.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.textContent = `${item.name} - $${item.price}`;
+    groceryListEl.appendChild(li);
   });
-  return merged;
 }
-
-// Merge/discard updates.
-mergeListButton.addEventListener("click", () => {
-  const incomingList = Array.from(updatedListEl.childNodes).map(li => {
-    const parts = li.textContent.split(" - $");
-    return { name: parts[0].trim(), price: Number(parts[1]) };
-  });
-  groceryList = mergeLists(groceryList, incomingList);
-  totalPrice = groceryList.reduce((sum, item) => sum + item.price, 0);
-  totalPriceDisplay.textContent = "$" + totalPrice;
-  renderGroceryList();
-  updatedListEl.innerHTML = "";
-  mergeDiscardButtons.classList.add("hidden");
-  storeGroceryList();
-});
-discardListButton.addEventListener("click", () => {
-  updatedListEl.innerHTML = "";
-  mergeDiscardButtons.classList.add("hidden");
-});
-
-// Connection flow.
-connectButton.addEventListener("click", () => {
-  const targetCode = connectInputEl.value.trim();
-  if (targetCode) {
-    channel.publish("connect-request", {
-      user: currentUserCode,
-      target: targetCode
-    });
-    alert(`Connection request sent to user: ${targetCode}`);
-    connectInputEl.value = "";
-  } else {
-    alert("Please enter a valid user code to connect.");
-  }
-});
-channel.subscribe("connect-request", (message) => {
-  if (message.data.target === currentUserCode) {
-    connectedUsers.add(message.data.user);
-    channel.publish("connect-back", {
-      user: currentUserCode,
-      target: message.data.user
-    });
-    channel.publish("list-updated", {
-      user: currentUserCode,
-      type: "initial",
-      list: groceryList,
-      connectedUsers: [message.data.user],
-      path: [currentUserCode]
-    });
-  }
-});
-channel.subscribe("connect-back", (message) => {
-  if (message.data.target === currentUserCode) {
-    connectedUsers.add(message.data.user);
-  }
-});
-// Function to generate a user code and store the new user record.
-async function initializeUserCode() {
-  try {
-    // Step 1: Generate the user code.
-    const generateCodeResponse = await fetch(
-      "https://groceryshoppingbot.netlify.app/.netlify/functions/app/generate-code"
-    );
-    const generateCodeData = await generateCodeResponse.json();
-
-    if (!generateCodeResponse.ok || generateCodeData.status !== "success") {
-      throw new Error("Failed to generate user code.");
-    }
-
-    const userCode = generateCodeData.code;
-    console.log("User code set to:", userCode);
-
-    // Step 2: Store the new user record.
-    const payload = {
-      user_id: userCode,
-      items: [],
-      total_price: 0,
-      budget: null,
-    };
-
-    console.log("Storing new user record for:", userCode);
-    console.log("Payload:", JSON.stringify(payload));
-
-    const storeUserRecordResponse = await fetch(
-      "https://groceryshoppingbot.netlify.app/.netlify/functions/app/grocery-list",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    if (!storeUserRecordResponse.ok) {
-      const errorText = await storeUserRecordResponse.text();
-      throw new Error(`Store user record failed: ${errorText}`);
-    }
-
-    const storeUserRecordData = await storeUserRecordResponse.json();
-    console.log("Store user record success:", storeUserRecordData);
-  } catch (error) {
-    console.error("Error during user initialization:", error);
-  }
-}
-
-// Call the function to initialize the user code and store the record.
-initializeUserCode();
