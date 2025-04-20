@@ -4,8 +4,7 @@ const { Pool } = require("pg");
 const serverless = require("serverless-http");
 
 // Use the provided connection string directly.
-const connectionString = "postgresql://neondb_owner:npg_SOMEUPDATEDPASSWORD@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
-
+const connectionString = "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
 // Log the connection string
 console.log("Using connection string:", connectionString);
 
