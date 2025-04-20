@@ -64,9 +64,9 @@
       <div id="budgetModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-gradient-to-r from-green-800 to-green-600 p-6 rounded-lg shadow-lg">
           <h2 class="text-xl font-bold mb-4 text-gray-100">Set Your Budget</h2>
-          <input id="budgetInput" type="number" placeholder="Enter your budget..." class="border border-green-400 p-2 rounded-md w-full mb-4 bg-green-700 text-gray-100 focus:outline-none focus:border-yellow-300">
+          <input id="budgetModalInput" type="number" placeholder="Enter your budget..." class="border border-green-400 p-2 rounded-md w-full mb-4 bg-green-700 text-gray-100 focus:outline-none focus:border-yellow-300">
           <div class="flex space-x-4">
-            <button id="saveBudgetButton" class="bg-yellow-500 text-gray-900 px-4 py-2 rounded-md hover:bg-yellow-600 transition">Save</button>
+            <button id="saveBudgetModalButton" class="bg-yellow-500 text-gray-900 px-4 py-2 rounded-md hover:bg-yellow-600 transition">Save</button>
             <button id="closeBudgetButton" class="bg-red-500 text-gray-100 px-4 py-2 rounded-md hover:bg-red-600 transition">Close</button>
           </div>
         </div>
@@ -114,8 +114,70 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/ably/browser/static/ably.min.js"></script>
-  <script src="script1.js"></script>
+  <script>
+    // Fix for "Set Budget" Button
+    document.getElementById("saveBudgetButton").addEventListener("click", () => {
+      const budgetInput = document.getElementById("budgetInput");
+      const budget = parseFloat(budgetInput.value);
+      if (!isNaN(budget) && budget > 0) {
+        currentBudget = budget;
+        document.getElementById("budgetDisplay").textContent = `$${currentBudget}`;
+        alert("Budget set successfully!");
+        budgetInput.value = ""; // Clear the input box
+      } else {
+        alert("Please enter a valid budget.");
+      }
+    });
+
+    // Fix for "Edit" button functionality
+    function renderGroceryList() {
+      const groceryListEl = document.getElementById("groceryList");
+      groceryListEl.innerHTML = "";
+      groceryList.forEach((item, index) => {
+        const li = document.createElement("li");
+
+        // Display the item details
+        const itemSpan = document.createElement("span");
+        itemSpan.textContent = `${item.name} - $${item.price} `;
+        li.appendChild(itemSpan);
+
+        // Add Edit button
+        const editButton = document.createElement("button");
+        editButton.textContent = "Edit";
+        editButton.style.marginRight = "5px";
+        editButton.addEventListener("click", () => {
+          const newName = prompt("Enter new name for the item:", item.name);
+          const newPriceInput = prompt("Enter new price for the item:", item.price);
+          const newPrice = parseFloat(newPriceInput);
+
+          if (newName && !isNaN(newPrice) && newPrice > 0) {
+            groceryList[index] = { name: newName, price: newPrice };
+            totalPrice = groceryList.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById("totalPriceDisplay").textContent = `$${totalPrice}`;
+            renderGroceryList();
+            publishGroceryList();
+          } else {
+            alert("Please enter valid details.");
+          }
+        });
+        li.appendChild(editButton);
+
+        // Add Delete button
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", () => {
+          groceryList.splice(index, 1);
+          totalPrice = groceryList.reduce((sum, item) => sum + item.price, 0);
+          document.getElementById("totalPriceDisplay").textContent = `$${totalPrice}`;
+          renderGroceryList();
+          publishGroceryList();
+        });
+        li.appendChild(deleteButton);
+
+        groceryListEl.appendChild(li);
+      });
+    }
+  </script>
 </body>
 
 </html>
