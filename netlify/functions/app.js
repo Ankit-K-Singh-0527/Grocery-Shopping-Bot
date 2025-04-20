@@ -38,7 +38,8 @@ app.get("/generate-code", async (req, res) => {
       code = "user" + (Math.floor(Math.random() * 900) + 100);
       console.log(`Attempt ${attempt + 1}: Trying code ${code}`);
       try {
-        const checkQuery = "SELECT * FROM grocery_list WHERE user_code = $1";
+        // Updated query column to "user_id"
+        const checkQuery = "SELECT * FROM grocery_list WHERE user_id = $1";
         const result = await pool.query(checkQuery, [code]);
         console.log(`Code ${code} checked, row count: ${result.rowCount}`);
         if (result.rowCount === 0) {
@@ -67,7 +68,8 @@ app.get("/grocery-list", async (req, res) => {
     return res.status(400).json({ status: "error", message: "Missing userCode parameter." });
   }
   try {
-    const query = "SELECT * FROM grocery_list WHERE user_code = $1";
+    // Updated query column to "user_id"
+    const query = "SELECT * FROM grocery_list WHERE user_id = $1";
     const result = await pool.query(query, [userCode]);
     console.log(`Fetched grocery list for ${userCode}, row count: ${result.rowCount}`);
     res.json({ status: "success", data: result.rows });
@@ -79,17 +81,18 @@ app.get("/grocery-list", async (req, res) => {
 
 // /grocery-list POST endpoint: inserts or updates a grocery list record.
 app.post("/grocery-list", async (req, res) => {
-  const user_code = req.body.user_code || req.body.userCode;
+  // We'll use userCode from the request to map to "user_id" in the table.
+  const user_id = req.body.user_id || req.body.userCode;
   const items = req.body.items;
   const total_price = req.body.total_price || req.body.totalPrice;
   const budget = req.body.budget;
-  if (!user_code) {
-    return res.status(400).json({ status: "error", message: "Missing user_code in request body." });
+  if (!user_id) {
+    return res.status(400).json({ status: "error", message: "Missing user_id in request body." });
   }
   const upsertQuery = `
-    INSERT INTO grocery_list (user_code, items, total_price, budget, created_at)
+    INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
     VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-    ON CONFLICT (user_code)
+    ON CONFLICT (user_id)
     DO UPDATE SET 
       items = EXCLUDED.items, 
       total_price = EXCLUDED.total_price, 
@@ -97,8 +100,8 @@ app.post("/grocery-list", async (req, res) => {
       created_at = CURRENT_TIMESTAMP;
   `;
   try {
-    await pool.query(upsertQuery, [user_code, JSON.stringify(items), total_price, budget]);
-    console.log("Stored/Updated grocery list for user:", user_code);
+    await pool.query(upsertQuery, [user_id, JSON.stringify(items), total_price, budget]);
+    console.log("Stored/Updated grocery list for user:", user_id);
     res.json({ status: "success" });
   } catch (err) {
     console.error("Error in /grocery-list POST endpoint:", err);
