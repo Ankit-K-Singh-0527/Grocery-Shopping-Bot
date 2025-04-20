@@ -112,26 +112,57 @@ app.get("/grocery-list", async (req, res) => {
 });
 
 // /grocery-list POST endpoint: Inserts or updates a grocery list record.
-// Note: If the record exists, our ON CONFLICT clause updates the "items", "total_price", and "budget" fields.
-// Make sure the column names in your database match these names (items, total_price, budget).
+// This endpoint will fetch the user_id from the DB record (using the value obtained from /generate-code)
+// rather than trusting the client payload.
 app.post("/grocery-list", async (req, res) => {
   console.log("Raw POST body:", req.body);
   const body = req.body;
-  const user_id = body.user_id || body.userId;
-  const items = body.items;
-  const total_price = body.total_price;
-  const budget = body.budget;
-
-  // Log the parsed request so we can verify the keys.
-  console.log("Parsed POST body:", { user_id, items, total_price, budget });
-  
-  if (!user_id) {
+  // Check for a user_id in the request
+  const clientUserId = body.user_id || body.userId;
+  if (!clientUserId) {
     return res.status(400).json({
       status: "error",
       message:
         "Missing user_id in request body. Please use the user_id obtained from /generate-code.",
     });
   }
+  
+  // Query the database to fetch the user_id that was created during /generate-code.
+  let dbUserId;
+  try {
+    const result = await pool.query(
+      "SELECT user_id FROM grocery_list WHERE user_id = $1",
+      [clientUserId]
+    );
+    if (result.rowCount > 0) {
+      dbUserId = result.rows[0].user_id;
+      console.log("Fetched user_id from DB:", dbUserId);
+    } else {
+      console.error("User_id not found in DB for:", clientUserId);
+      return res.status(400).json({
+        status: "error",
+        message:
+          "User not found in DB. Please use the user_id obtained from /generate-code.",
+      });
+    }
+  } catch (err) {
+    console.error("Error fetching user_id from DB:", err);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Error fetching user_id from DB" });
+  }
+  
+  const user_id = dbUserId;
+  const items = body.items;
+  const total_price = body.total_price;
+  const budget = body.budget;
+  
+  console.log("Parsed POST body using DB user_id:", {
+    user_id,
+    items,
+    total_price,
+    budget,
+  });
   
   const upsertQuery = `
     INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
@@ -144,7 +175,12 @@ app.post("/grocery-list", async (req, res) => {
   `;
   
   try {
-    await pool.query(upsertQuery, [user_id, JSON.stringify(items), total_price, budget]);
+    await pool.query(upsertQuery, [
+      user_id,
+      JSON.stringify(items),
+      total_price,
+      budget,
+    ]);
     console.log("Upsert successfully executed for user_id:", user_id);
     res.json({ status: "success", user_id });
   } catch (err) {
