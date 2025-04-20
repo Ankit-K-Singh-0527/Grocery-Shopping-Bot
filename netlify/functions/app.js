@@ -66,7 +66,11 @@ app.get("/grocery-list", async (req, res) => {
 
 // /grocery-list POST endpoint: inserts or updates a grocery list record.
 app.post("/grocery-list", async (req, res) => {
-  const { user_code, items, total_price, budget } = req.body;
+  // Accept either user_code or userCode, and total_price or totalPrice from the request body.
+  const user_code = req.body.user_code || req.body.userCode;
+  const items = req.body.items;
+  const total_price = req.body.total_price || req.body.totalPrice;
+  const budget = req.body.budget;
   if (!user_code) {
     return res.status(400).json({ status: "error", message: "Missing user_code in request body." });
   }
@@ -90,5 +94,4 @@ app.post("/grocery-list", async (req, res) => {
   }
 });
 
-// Export the Express app wrapped in the serverless-http handler
 module.exports.handler = serverless(app);
