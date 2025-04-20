@@ -243,39 +243,52 @@
         showNotification("All grocery list items have been added to your cart!");
       });
       
-      // Predefined suggestion list of 15 common grocery items
-      const suggestionList = [
-        "Apple",
-        "Banana",
-        "Carrot",
-        "Bread",
-        "Milk",
-        "Eggs",
-        "Cheese",
-        "Orange",
-        "Tomato",
-        "Potato",
-        "Chicken",
-        "Beef",
-        "Rice",
-        "Pasta",
-        "Lettuce"
-      ];
+      // Predefined suggestion groups with 15-20 different groups
+      const suggestionGroups = {
+        "milk": ["cheese", "bread", "butter"],
+        "mango": ["orange", "banana", "pineapple"],
+        "apple": ["pear", "grape", "kiwi"],
+        "egg": ["bacon", "sausage", "toast"],
+        "rice": ["beans", "chicken", "curry"],
+        "pasta": ["tomato sauce", "basil", "parmesan"],
+        "salad": ["lettuce", "tomato", "cucumber", "olive oil"],
+        "soup": ["croutons", "bread", "cheese"],
+        "chicken": ["fries", "burger", "nuggets"],
+        "beef": ["steak", "potato", "gravy"],
+        "fish": ["chips", "lemon", "salad"],
+        "yogurt": ["granola", "berries", "honey"],
+        "coffee": ["sugar", "cream", "cocoa"],
+        "tea": ["lemon", "honey", "mint"],
+        "water": ["lemon", "ice", "mint leaves"],
+        "burger": ["cheese", "lettuce", "tomato"],
+        "pizza": ["pepperoni", "mushroom", "olives"]
+      };
       
       const itemInput = document.getElementById("itemInput");
       const suggestionContainer = document.getElementById("suggestionContainer");
       
-      // Display suggestions as user types
+      // Display suggestions as user types based on groups
       itemInput.addEventListener("input", () => {
         const query = itemInput.value.trim().toLowerCase();
         suggestionContainer.innerHTML = "";
         if (query === "") {
           return;
         }
-        const filteredSuggestions = suggestionList.filter(item =>
-          item.toLowerCase().startsWith(query)
-        );
-        filteredSuggestions.forEach(suggestion => {
+        let suggestions = [];
+        // Check for exact match
+        if (suggestionGroups.hasOwnProperty(query)) {
+          suggestions = suggestionGroups[query];
+        } else {
+          // Collect suggestions from keys that start with the query
+          for (const key in suggestionGroups) {
+            if (key.startsWith(query)) {
+              suggestions = suggestions.concat(suggestionGroups[key]);
+            }
+          }
+        }
+        // Remove duplicates if any
+        suggestions = [...new Set(suggestions)];
+        suggestions.forEach(suggestion => {
           const suggestionDiv = document.createElement("div");
           suggestionDiv.className = "suggestion-item";
           suggestionDiv.textContent = suggestion;
