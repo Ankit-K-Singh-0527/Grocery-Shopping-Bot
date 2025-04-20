@@ -16,10 +16,10 @@ const app = express();
 // Use express.json() middleware to parse JSON bodies.
 app.use(express.json());
 
-// Additional middleware to ensure that the request body is parsed properly.
+// Middleware to ensure req.body is parsed correctly
 app.use((req, res, next) => {
-  // If no keys exist, assume the body wasn't parsed.
   if (!req.body || Object.keys(req.body).length === 0) {
+    // In case body is empty, try to parse rawBody if available
     try {
       req.body = JSON.parse(req.rawBody || "{}");
     } catch (err) {
@@ -42,7 +42,7 @@ app.use((req, res, next) => {
 
 /**
  * Internal function to generate a unique user code.
- * This logic is the same as used by the /generate-code endpoint.
+ * This logic is used by the /generate-code endpoint.
  */
 async function generateUserCodeInternal() {
   let code = "";
@@ -94,7 +94,6 @@ app.get("/grocery-list", async (req, res) => {
     const query = "SELECT * FROM grocery_list WHERE user_id = $1";
     const result = await pool.query(query, [user_id]);
     console.log(`Found ${result.rowCount} record(s) for user_id ${user_id}`);
-    // Parse the 'items' field from JSON before sending the response.
     const rows = result.rows.map(row => {
       try {
         row.items = JSON.parse(row.items);
@@ -111,13 +110,12 @@ app.get("/grocery-list", async (req, res) => {
   }
 });
 
-// /grocery-list POST endpoint: Inserts or updates a grocery list record.
-// This endpoint ignores the user_id sent by the client and instead fetches the record from the DB.
+// /grocery-list POST endpoint: Updates a grocery list record.
+// This endpoint first retrieves the record for the provided user_id (using the GET logic)
+// and then uses that stored user_id to update the grocery list (items, total_price, and budget).
 app.post("/grocery-list", async (req, res) => {
   console.log("Raw POST body:", req.body);
   const body = req.body;
-
-  // Read the user_id from the client payload.
   const clientUserId = body.user_id || body.userId;
   if (!clientUserId) {
     return res.status(400).json({
@@ -127,44 +125,33 @@ app.post("/grocery-list", async (req, res) => {
     });
   }
   
-  // Now, fetch the user_id from the database to ensure we use the same one generated via /generate-code.
-  let dbUserId;
+  // Use the GET logic to retrieve the record from the DB.
+  let dbRecord;
   try {
-    const result = await pool.query(
-      "SELECT user_id FROM grocery_list WHERE user_id = $1",
-      [clientUserId]
-    );
+    const result = await pool.query("SELECT * FROM grocery_list WHERE user_id = $1", [clientUserId]);
     if (result.rowCount > 0) {
-      dbUserId = result.rows[0].user_id;
-      console.log("Fetched user_id from DB:", dbUserId);
+      dbRecord = result.rows[0];
+      console.log("Fetched record from DB for user_id:", dbRecord.user_id);
     } else {
-      // If not found in the DB, instruct the client to run /generate-code.
-      console.error("User_id not found in DB for:", clientUserId);
+      console.error("No record found for user_id:", clientUserId);
       return res.status(400).json({
         status: "error",
-        message:
-          "User not found in DB. Please use the user_id obtained from /generate-code.",
+        message: "User not found in DB. Please use the user_id obtained from /generate-code.",
       });
     }
   } catch (err) {
-    console.error("Error fetching user_id from DB:", err);
-    return res
-      .status(500)
-      .json({ status: "error", message: "Error fetching user_id from DB" });
+    console.error("Error fetching user record from DB:", err);
+    return res.status(500).json({ status: "error", message: "DB error" });
   }
   
-  // Use the DB user_id for the upsert.
-  const user_id = dbUserId;
+  // Use the stored user_id from the record.
+  const user_id = dbRecord.user_id;
+  // Update with provided values.
   const items = body.items;
   const total_price = body.total_price;
   const budget = body.budget;
   
-  console.log("Parsed POST body using DB user_id:", {
-    user_id,
-    items,
-    total_price,
-    budget,
-  });
+  console.log("Updating record for user_id:", user_id, { items, total_price, budget });
   
   const upsertQuery = `
     INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
@@ -183,7 +170,7 @@ app.post("/grocery-list", async (req, res) => {
       total_price,
       budget,
     ]);
-    console.log("Upsert successfully executed for user_id:", user_id);
+    console.log("Upsert executed successfully for user_id:", user_id);
     res.json({ status: "success", user_id });
   } catch (err) {
     console.error("Error upserting grocery list:", err);
