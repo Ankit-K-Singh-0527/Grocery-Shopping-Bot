@@ -464,12 +464,17 @@ function renderGroceryList() {
 
 // Function to persist the grocery list to the backend.
 function storeGroceryList() {
-  if (!currentUserCode) return;
+  // Check if currentUserCode is valid
+  console.log("Storing grocery list for:", currentUserCode);
+  if (!currentUserCode) {
+    console.error("currentUserCode is not set!");
+    return;
+  }
   fetch("/.netlify/functions/app/grocery-list", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      userId: currentUserCode,
+      userId: currentUserCode, // this should match req.body.userId on backend
       items: groceryList,
       totalPrice: totalPrice,
       budget: currentBudget
