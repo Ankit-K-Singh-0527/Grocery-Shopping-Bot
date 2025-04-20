@@ -16,6 +16,16 @@ const app = express();
 
 app.use(bodyParser.json());
 
+// Middleware to strip Netlify function prefix from the URL.
+// If the URL starts with '/.netlify/functions/app', remove that so that
+// routes like "/generate-code" work as expected.
+app.use((req, res, next) => {
+  if (req.url.startsWith('/.netlify/functions/app')) {
+    req.url = req.url.replace('/.netlify/functions/app', '');
+  }
+  next();
+});
+
 // /generate-code endpoint: generates a unique user code.
 app.get("/generate-code", async (req, res) => {
   try {
@@ -66,7 +76,6 @@ app.get("/grocery-list", async (req, res) => {
 
 // /grocery-list POST endpoint: inserts or updates a grocery list record.
 app.post("/grocery-list", async (req, res) => {
-  // Accept either user_code or userCode, and total_price or totalPrice from the request body.
   const user_code = req.body.user_code || req.body.userCode;
   const items = req.body.items;
   const total_price = req.body.total_price || req.body.totalPrice;
