@@ -27,7 +27,7 @@ document.getElementById("saveBudgetButton").addEventListener("click", () => {
   if (!isNaN(budget) && budget > 0) {
     currentBudget = budget;
     budgetDisplay.textContent = `$${currentBudget}`;
-    alert("Budget set successfully!");
+    //alert("Budget set successfully!");
   } else {
     alert("Please enter a valid budget.");
   }
