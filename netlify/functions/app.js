@@ -4,7 +4,7 @@ const { Pool } = require("pg");
 const serverless = require("serverless-http");
 
 // Use the provided connection string directly.
-const connectionString = "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
+const connectionString = "postgresql://neondb_owner:npg_SOMEUPDATEDPASSWORD@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
 
 // Log the connection string
 console.log("Using connection string:", connectionString);
@@ -35,10 +35,10 @@ app.get("/generate-code", async (req, res) => {
     let code = "";
     const maxAttempts = 10;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      // Generate a code using the "user" prefix followed by a 3-digit number.
       code = "user" + (Math.floor(Math.random() * 900) + 100);
       console.log(`Attempt ${attempt + 1}: Trying code ${code}`);
       try {
-        // Updated query column to "user_id"
         const checkQuery = "SELECT * FROM grocery_list WHERE user_id = $1";
         const result = await pool.query(checkQuery, [code]);
         console.log(`Code ${code} checked, row count: ${result.rowCount}`);
@@ -61,17 +61,17 @@ app.get("/generate-code", async (req, res) => {
   }
 });
 
-// /grocery-list GET endpoint: retrieves the grocery list for a given user code.
+// /grocery-list GET endpoint: retrieves the grocery list for a given user.
 app.get("/grocery-list", async (req, res) => {
-  const userCode = req.query.userCode;
-  if (!userCode) {
-    return res.status(400).json({ status: "error", message: "Missing userCode parameter." });
+  // Expecting a query parameter "userId" to match the "user_id" column.
+  const userId = req.query.userId;
+  if (!userId) {
+    return res.status(400).json({ status: "error", message: "Missing userId parameter." });
   }
   try {
-    // Updated query column to "user_id"
     const query = "SELECT * FROM grocery_list WHERE user_id = $1";
-    const result = await pool.query(query, [userCode]);
-    console.log(`Fetched grocery list for ${userCode}, row count: ${result.rowCount}`);
+    const result = await pool.query(query, [userId]);
+    console.log(`Fetched grocery list for ${userId}, row count: ${result.rowCount}`);
     res.json({ status: "success", data: result.rows });
   } catch (err) {
     console.error("Error in /grocery-list GET endpoint:", err);
@@ -81,8 +81,8 @@ app.get("/grocery-list", async (req, res) => {
 
 // /grocery-list POST endpoint: inserts or updates a grocery list record.
 app.post("/grocery-list", async (req, res) => {
-  // We'll use userCode from the request to map to "user_id" in the table.
-  const user_id = req.body.user_id || req.body.userCode;
+  // Expecting the client to send either "user_id" or "userId" in the request body.
+  const user_id = req.body.user_id || req.body.userId;
   const items = req.body.items;
   const total_price = req.body.total_price || req.body.totalPrice;
   const budget = req.body.budget;

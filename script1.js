@@ -243,11 +243,11 @@ const ably = new Ably.Realtime("QFP-Dw.p_WLfg:ilu2PzKHJR1Tn14Pl6l1-kO0RcoqK3-_Ns
 const channel = ably.channels.get("grocery-list-channel");
 
 // Global variables
+let currentUserCode = "";
 let currentBudget = null;
 let totalPrice = 0;
 let groceryList = [];
 let connectedUsers = new Set();
-let currentUserCode = "";
 
 // DOM Elements
 const userCodeDisplay = document.getElementById("userCode");
@@ -259,20 +259,23 @@ const totalPriceDisplay = document.getElementById("totalPriceDisplay");
 // Initialize when the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOMContentLoaded fired");
-  initializeUserCodeLoop(); // Use a loop for retrying
+  initializeUserCodeLoop(); // Use a loop for retrying user code initialization
 });
 
+// Function to initialize or validate the user code using a loop with retry logic.
 async function initializeUserCodeLoop() {
   let codeSet = false;
   while (!codeSet) {
     console.log("Initializing user code...");
     alert("A prompt will ask for your unique code. Click OK to continue.");
+    
     // Prompt the user for a code; if blank, a new code will be generated.
     let code = prompt("Enter your unique code (leave blank if new):");
+    
     if (code && code.trim() !== "") {
       try {
         // Check if the provided code exists in the backend.
-        const response = await fetch("/.netlify/functions/app/grocery-list?userCode=" + encodeURIComponent(code.trim()));
+        const response = await fetch("/.netlify/functions/app/grocery-list?userId=" + encodeURIComponent(code.trim()));
         const data = await response.json();
         console.log("Check code response:", data);
         if (data.status === "success" && data.data && data.data.length > 0) {
@@ -309,8 +312,9 @@ async function initializeUserCodeLoop() {
   loadUserList(currentUserCode);
 }
 
+// Function to load the grocery list from the backend using the current user code.
 function loadUserList(code) {
-  fetch("/.netlify/functions/app/grocery-list?userCode=" + encodeURIComponent(code))
+  fetch("/.netlify/functions/app/grocery-list?userId=" + encodeURIComponent(code))
     .then(response => response.json())
     .then(data => {
       console.log("Load user list response:", data);
@@ -348,6 +352,7 @@ function loadUserList(code) {
 document.getElementById("closeBudgetButton").addEventListener("click", () => {
   budgetModal.classList.add("hidden");
 });
+
 document.getElementById("saveBudgetButton").addEventListener("click", () => {
   const budget = parseFloat(budgetInput.value);
   if (!isNaN(budget) && budget > 0) {
@@ -360,11 +365,12 @@ document.getElementById("saveBudgetButton").addEventListener("click", () => {
   budgetModal.classList.add("hidden");
   storeGroceryList();
 });
+
 document.getElementById("openBudgetButton").addEventListener("click", () => {
   budgetModal.classList.toggle("hidden");
 });
 
-// Function to add an item to the grocery list
+// Function to add an item to the grocery list.
 function addItemToList(item) {
   const normalizedItem = item.toLowerCase();
   if (groceryList.some(entry => entry.name.toLowerCase() === normalizedItem)) {
@@ -383,7 +389,7 @@ function addItemToList(item) {
   storeGroceryList();
 }
 
-// Function to publish the update via Ably
+// Function to publish the updated grocery list via Ably.
 function publishGroceryList() {
   channel.publish("list-updated", {
     user: currentUserCode,
@@ -394,7 +400,7 @@ function publishGroceryList() {
   });
 }
 
-// Function to render the grocery list in the UI
+// Function to render the grocery list on the UI.
 function renderGroceryList() {
   const groceryListEl = document.getElementById("groceryList");
   groceryListEl.innerHTML = "";
@@ -403,7 +409,7 @@ function renderGroceryList() {
     const itemSpan = document.createElement("span");
     itemSpan.textContent = item.name + " - $" + item.price + " ";
     li.appendChild(itemSpan);
-    
+
     const editButton = document.createElement("button");
     editButton.textContent = "Edit";
     editButton.style.marginRight = "5px";
@@ -421,7 +427,7 @@ function renderGroceryList() {
       storeGroceryList();
     });
     li.appendChild(editButton);
-    
+
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "Delete";
     deleteButton.addEventListener("click", () => {
@@ -433,7 +439,7 @@ function renderGroceryList() {
       storeGroceryList();
     });
     li.appendChild(deleteButton);
-    
+
     groceryListEl.appendChild(li);
   });
 }
@@ -447,20 +453,20 @@ document.getElementById("addItemButton").addEventListener("click", () => {
   }
 });
 
-// Function to store the grocery list to the backend
+// Function to persist the grocery list to the backend.
 function storeGroceryList() {
   if (!currentUserCode) return;
   fetch("/.netlify/functions/app/grocery-list", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      userCode: currentUserCode,
+      userId: currentUserCode,
       items: groceryList,
       totalPrice: totalPrice,
       budget: currentBudget
     })
   })
-  .then(response => response.json())
-  .then(data => console.log("Stored:", data))
-  .catch(err => console.error("Store error:", err));
+    .then(response => response.json())
+    .then(data => console.log("Stored:", data))
+    .catch(err => console.error("Store error:", err));
 }
