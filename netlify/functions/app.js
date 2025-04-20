@@ -4,14 +4,21 @@ const { Pool } = require("pg");
 const serverless = require("serverless-http");
 
 // Hardcoded connection string as default.
-const defaultConnectionString = "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
+const defaultConnectionString =
+  "postgresql://neondb_owner:npg_sNweM82LZRcy@ep-divine-morning-a4cylplf-pooler.us-east-1.aws.neon.tech/grocery_db?sslmode=require";
 
 // Use the environment variable PG_CONNECTION_STRING if provided, otherwise fallback to the default.
 const connectionString = process.env.PG_CONNECTION_STRING || defaultConnectionString;
 
+// Log the connection string
 console.log("Using connection string:", connectionString);
 
-const pool = new Pool({ connectionString });
+// Updated to include SSL settings for Neon—without modifying the db link.
+const pool = new Pool({
+  connectionString,
+  ssl: { rejectUnauthorized: false },
+});
+
 const app = express();
 
 app.use(bodyParser.json());
