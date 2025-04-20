@@ -17,7 +17,7 @@ app.get("/generate-code", async (req, res) => {
       userCode,
       JSON.stringify([]),
       0,
-      null,
+      null
     ]);
     res.json({ status: "success", code: userCode });
   } catch (error) {

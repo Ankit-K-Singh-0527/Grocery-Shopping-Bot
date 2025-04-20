@@ -239,7 +239,7 @@
 // Frontend JavaScript Code
 
 // Ably Initialization
-const ably = new Ably.Realtime("QFP-Dw.p_WLfg:ilu2PzKHJR1Tn14Pl6l1-kO0RcoqK3-_NsXV8U8PjXk");
+const ably = new Ably.Realtime("YOUR_ABLY_API_KEY");
 const channel = ably.channels.get("grocery-list-channel");
 
 // Global variables
@@ -247,7 +247,6 @@ let currentUserCode = "";
 let currentBudget = null;
 let totalPrice = 0;
 let groceryList = [];
-let connectedUsers = new Set();
 
 // DOM Elements
 const userCodeDisplay = document.getElementById("userCode");
@@ -255,16 +254,15 @@ const budgetDisplay = document.getElementById("budgetDisplay");
 const totalPriceDisplay = document.getElementById("totalPriceDisplay");
 const groceryListEl = document.getElementById("groceryList");
 
-// On DOM ready, initialize your code:
+// Initialize the app on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("Initializing application...");
   initializeUserCodeLoop();
 
   document.getElementById("addItemButton").addEventListener("click", () => {
     const itemInputEl = document.getElementById("itemInput");
-    const item = itemInputEl.value.trim();
-    if (item) {
-      addItemToList(item);
+    const itemName = itemInputEl.value.trim();
+    if (itemName) {
+      addItemToList(itemName);
       itemInputEl.value = "";
     } else {
       alert("Please enter a valid item name.");
@@ -272,23 +270,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Function to initialize or get the user code
+// Function to initialize user code
 async function initializeUserCodeLoop() {
   let codeSet = false;
+
   while (!codeSet) {
-    console.log("Initializing user code...");
     const userInput = prompt("Enter your unique code (leave blank to generate a new one):");
 
     if (userInput && userInput.trim()) {
       try {
         const response = await fetch(`/grocery-list?user_id=${encodeURIComponent(userInput.trim())}`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            alert(`Code "${userInput.trim()}" does not exist. Please try again or leave blank to generate a new code.`);
-          } else {
-            throw new Error(`Error checking code: ${response.status}`);
-          }
-        } else {
+        if (response.ok) {
           const data = await response.json();
           if (data.status === "success" && data.data.length > 0) {
             currentUserCode = userInput.trim();
@@ -296,6 +288,10 @@ async function initializeUserCodeLoop() {
           } else {
             alert("Code not found. Please try again.");
           }
+        } else if (response.status === 404) {
+          alert("Code does not exist. Please try again.");
+        } else {
+          throw new Error("Error checking code.");
         }
       } catch (error) {
         console.error("Error checking code:", error);
@@ -303,9 +299,7 @@ async function initializeUserCodeLoop() {
     } else {
       try {
         const response = await fetch("/generate-code");
-        if (!response.ok) throw new Error(`Error generating code: ${response.status}`);
         const data = await response.json();
-
         if (data.status === "success" && data.code) {
           currentUserCode = data.code;
           alert(`Generated new user code: ${currentUserCode}`);
@@ -320,41 +314,28 @@ async function initializeUserCodeLoop() {
   }
 
   userCodeDisplay.textContent = currentUserCode;
-  console.log(`User code set to: ${currentUserCode}`);
   await storeUserRecord();
   await loadUserList();
 }
 
 // Function to store a new user record
 async function storeUserRecord() {
-  if (!currentUserCode) {
-    console.error("storeUserRecord called without a valid user code.");
-    return;
-  }
-
   const payload = {
     user_id: currentUserCode,
     items: [],
     total_price: 0,
-    budget: currentBudget,
+    budget: null
   };
 
   try {
     const response = await fetch("/grocery-list", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Error storing user record:", errorData);
-      throw new Error(errorData.message || "Error storing user record.");
-    }
-
-    console.log("User record stored successfully.");
+    if (!response.ok) throw new Error("Failed to store user record.");
   } catch (error) {
-    console.error("storeUserRecord error:", error);
+    console.error("Error storing user record:", error.message);
   }
 }
 
@@ -362,37 +343,25 @@ async function storeUserRecord() {
 async function loadUserList() {
   try {
     const response = await fetch(`/grocery-list?user_id=${encodeURIComponent(currentUserCode)}`);
-    if (!response.ok) {
-      if (response.status === 404) {
-        console.warn("No grocery list found for user.");
-        groceryList = [];
-        currentBudget = null;
-        totalPrice = 0;
+    if (response.ok) {
+      const data = await response.json();
+      if (data.status === "success" && data.data.length > 0) {
+        const record = data.data[0];
+        groceryList = Array.isArray(record.items) ? record.items : JSON.parse(record.items || "[]");
+        currentBudget = record.budget;
+        totalPrice = record.total_price || 0;
+
         renderGroceryList();
-        return;
-      } else {
-        throw new Error(`Error fetching grocery list: ${response.status}`);
       }
-    }
-
-    const data = await response.json();
-    if (data.status === "success" && data.data.length > 0) {
-      const record = data.data[0];
-      groceryList = Array.isArray(record.items) ? record.items : JSON.parse(record.items || "[]");
-      currentBudget = record.budget;
-      totalPrice = record.total_price || 0;
-
-      console.log("Grocery list loaded:", groceryList);
-      renderGroceryList();
     } else {
-      console.warn("No data found for grocery list.");
+      console.warn("No grocery list found for user.");
     }
   } catch (error) {
-    console.error("Error loading grocery list:", error);
+    console.error("Error loading grocery list:", error.message);
   }
 }
 
-// Function to render the grocery list in the DOM
+// Function to render the grocery list
 function renderGroceryList() {
   groceryListEl.innerHTML = "";
   groceryList.forEach(item => {
@@ -400,55 +369,37 @@ function renderGroceryList() {
     li.textContent = `${item.name} - $${item.price}`;
     groceryListEl.appendChild(li);
   });
-  budgetDisplay.textContent = `$${currentBudget || "Not Set"}`;
+
+  budgetDisplay.textContent = currentBudget ? `$${currentBudget}` : "Not Set";
   totalPriceDisplay.textContent = `$${totalPrice}`;
 }
 
 // Function to add an item to the grocery list
 function addItemToList(itemName) {
-  const normalizedItem = itemName.toLowerCase();
-  if (groceryList.some(item => item.name.toLowerCase() === normalizedItem)) {
-    alert("Item already exists in the list.");
-    return;
-  }
-
   const price = Math.floor(Math.random() * 20) + 1;
   groceryList.push({ name: itemName, price });
   totalPrice += price;
-
   renderGroceryList();
   storeGroceryList();
 }
 
-// Function to store the grocery list to the backend
+// Function to persist the grocery list to the backend
 async function storeGroceryList() {
-  if (!currentUserCode) {
-    console.error("Cannot store grocery list without a valid user code.");
-    return;
-  }
-
   const payload = {
     user_id: currentUserCode,
     items: groceryList,
     total_price: totalPrice,
-    budget: currentBudget,
+    budget: currentBudget
   };
 
   try {
     const response = await fetch("/grocery-list", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Error storing grocery list:", errorData);
-      throw new Error(errorData.message || "Error storing grocery list.");
-    }
-
-    console.log("Grocery list stored successfully.");
+    if (!response.ok) throw new Error("Failed to store grocery list.");
   } catch (error) {
-    console.error("storeGroceryList error:", error);
+    console.error("Error storing grocery list:", error.message);
   }
 }
