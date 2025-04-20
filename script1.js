@@ -285,7 +285,6 @@ async function storeUserRecord() {
     return;
   }
 
-  // Build payload with proper structure
   const payload = {
     user_id: currentUserCode,
     items: [],
@@ -304,7 +303,7 @@ async function storeUserRecord() {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json(); // Always parse JSON response
+    const data = await response.json();
 
     if (!response.ok) {
       console.error("storeUserRecord response not ok:", response.status, data);
@@ -377,6 +376,15 @@ async function loadUserList(userId) {
     );
 
     if (!response.ok) {
+      if (response.status === 404) {
+        console.warn("No grocery list found for user_id:", userId);
+        groceryList = [];
+        currentBudget = null;
+        totalPrice = 0;
+        renderGroceryList();
+        return;
+      }
+
       console.error("loadUserList response not ok:", response.status);
       throw new Error(`Failed to fetch grocery list: ${response.status}`);
     }
