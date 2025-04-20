@@ -284,10 +284,13 @@ function storeUserRecord() {
     console.error("storeUserRecord called without a valid currentUserCode.");
     return;
   }
+  // Build payload with both keys.
   const payload = {
-    user_id: currentUserCode, // using "user_id" key explicitly
-    items: [],                // empty list on creation
+    user_id: currentUserCode,
+    userId: currentUserCode,
+    items: [],
     total_price: 0,
+    totalPrice: 0,
     budget: currentBudget
   };
   console.log("Storing new user record for:", currentUserCode);
@@ -303,12 +306,8 @@ function storeUserRecord() {
       }
       return response.json();
     })
-    .then(data => {
-      console.log("storeUserRecord stored:", data);
-    })
-    .catch(err => {
-      console.error("storeUserRecord error:", err);
-    });
+    .then(data => console.log("storeUserRecord stored:", data))
+    .catch(err => console.error("storeUserRecord error:", err));
 }
 
 // Function to initialize/obtain the user code from the user or generate a new one.
@@ -500,10 +499,13 @@ function storeGroceryList() {
     console.error("storeGroceryList called with empty currentUserCode");
     return;
   }
+  // Build payload with both property names.
   const payload = {
     user_id: currentUserCode,
+    userId: currentUserCode,
     items: groceryList,
     total_price: totalPrice,
+    totalPrice: totalPrice,
     budget: currentBudget
   };
   console.log("Storing grocery list for user:", currentUserCode);
@@ -616,7 +618,7 @@ channel.subscribe("connect-request", (message) => {
       type: "initial",
       list: groceryList,
       connectedUsers: [message.data.user],
-      path: [currentUserCode],
+      path: [currentUserCode]
     });
   }
 });

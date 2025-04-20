@@ -75,14 +75,14 @@ app.post("/grocery-list", async (req, res) => {
   }
   
   const upsertQuery = `
-    INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
-    VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-    ON CONFLICT (user_id)
-    DO UPDATE SET 
-      items = EXCLUDED.items, 
-      total_price = EXCLUDED.total_price, 
-      budget = EXCLUDED.budget;
-  `;
+  INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
+  VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+  ON CONFLICT (user_id)
+  DO UPDATE SET 
+    items = EXCLUDED.items, 
+    total_price = EXCLUDED.total_price, 
+    budget = EXCLUDED.budget;
+`;
   try {
     await pool.query(upsertQuery, [user_id, JSON.stringify(items), total_price, budget]);
     res.json({ status: "success" });
