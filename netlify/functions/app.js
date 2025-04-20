@@ -24,25 +24,40 @@ app.use((req, res, next) => {
   next();
 });
 
-// /generate-code endpoint: Generates and returns a unique user_id.
-app.get("/generate-code", async (req, res) => {
-  try {
-    let code = "";
-    const maxAttempts = 10;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      code = "user" + (Math.floor(Math.random() * 900) + 100);
-      const result = await pool.query("SELECT * FROM grocery_list WHERE user_id = $1", [code]);
+/**
+ * Internal function to generate a unique user code.
+ * This logic is used by the /generate-code endpoint.
+ */
+async function generateUserCodeInternal() {
+  let code = "";
+  const maxAttempts = 10;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    code = "user" + (Math.floor(Math.random() * 900) + 100);
+    try {
+      const checkQuery = "SELECT * FROM grocery_list WHERE user_id = $1";
+      const result = await pool.query(checkQuery, [code]);
       if (result.rowCount === 0) {
-        // Insert the generated user_id into the database.
+        // Insert a new record with an empty list.
         const insertQuery = `
           INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
           VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
         `;
         await pool.query(insertQuery, [code, JSON.stringify([]), 0, null]);
-        return res.json({ status: "success", code });
+        return code;
       }
+    } catch (dbError) {
+      console.error("Database error during code check:", dbError);
+      throw new Error("Database error during code check.");
     }
-    throw new Error("Unable to generate a unique code after several attempts.");
+  }
+  throw new Error("Unable to generate a unique code after several attempts.");
+}
+
+// /generate-code endpoint: Generates and returns a unique user_id.
+app.get("/generate-code", async (req, res) => {
+  try {
+    const code = await generateUserCodeInternal();
+    return res.json({ status: "success", code });
   } catch (err) {
     console.error("Error generating code:", err);
     res.status(500).json({ status: "error", message: err.message });
@@ -92,6 +107,72 @@ app.get("/grocery-list", async (req, res) => {
     res.json({ status: "success", data: updatedRecord });
   } catch (err) {
     console.error("Error updating and fetching grocery list:", err);
+    res.status(500).json({ status: "error", message: err.message });
+  }
+});
+
+// /grocery-list POST endpoint: Updates a grocery list record.
+app.post("/grocery-list", async (req, res) => {
+  console.log("Raw POST body:", req.body);
+  const body = req.body;
+  const clientUserId = body.user_id || body.userId;
+  if (!clientUserId) {
+    return res.status(400).json({
+      status: "error",
+      message:
+        "Missing user_id in request body. Please use the user_id obtained from /generate-code.",
+    });
+  }
+  
+  // Use the GET logic to retrieve the record from the DB.
+  let dbRecord;
+  try {
+    const result = await pool.query("SELECT * FROM grocery_list WHERE user_id = $1", [clientUserId]);
+    if (result.rowCount > 0) {
+      dbRecord = result.rows[0];
+      console.log("Fetched record from DB for user_id:", dbRecord.user_id);
+    } else {
+      console.error("No record found for user_id:", clientUserId);
+      return res.status(400).json({
+        status: "error",
+        message: "User not found in DB. Please use the user_id obtained from /generate-code.",
+      });
+    }
+  } catch (err) {
+    console.error("Error fetching user record from DB:", err);
+    return res.status(500).json({ status: "error", message: "DB error" });
+  }
+  
+  // Use the stored user_id from the record.
+  const user_id = dbRecord.user_id;
+  // Update with provided values.
+  const items = body.items;
+  const total_price = body.total_price;
+  const budget = body.budget;
+  
+  console.log("Updating record for user_id:", user_id, { items, total_price, budget });
+  
+  const upsertQuery = `
+    INSERT INTO grocery_list (user_id, items, total_price, budget, created_at)
+    VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+    ON CONFLICT (user_id)
+    DO UPDATE SET 
+      items = EXCLUDED.items, 
+      total_price = EXCLUDED.total_price, 
+      budget = EXCLUDED.budget;
+  `;
+  
+  try {
+    await pool.query(upsertQuery, [
+      user_id,
+      JSON.stringify(items),
+      total_price,
+      budget,
+    ]);
+    console.log("Upsert executed successfully for user_id:", user_id);
+    res.json({ status: "success", user_id });
+  } catch (err) {
+    console.error("Error upserting grocery list:", err);
     res.status(500).json({ status: "error", message: err.message });
   }
 });
