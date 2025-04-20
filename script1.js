@@ -242,7 +242,7 @@
 const ably = new Ably.Realtime("QFP-Dw.p_WLfg:ilu2PzKHJR1Tn14Pl6l1-kO0RcoqK3-_NsXV8U8PjXk");
 const channel = ably.channels.get("grocery-list-channel");
 
-// Global variables
+// Global variables (only declared once)
 let currentUserCode = "";
 let currentBudget = null;
 let totalPrice = 0;
@@ -255,25 +255,17 @@ const budgetModal = document.getElementById("budgetModal");
 const budgetInput = document.getElementById("budgetInput");
 const budgetDisplay = document.getElementById("budgetDisplay");
 const totalPriceDisplay = document.getElementById("totalPriceDisplay");
-
-// Elements for receiving updates
 const updatedListEl = document.getElementById("updatedList");
 const mergeDiscardButtons = document.getElementById("mergeDiscardButtons");
 const mergeListButton = document.getElementById("mergeListButton");
 const discardListButton = document.getElementById("discardListButton");
-
-// Elements for connection flow
 const connectInputEl = document.getElementById("connectInput");
 const connectButton = document.getElementById("connectButton");
 
-// Ensure that all event registrations occur once DOM is fully loaded.
+// On DOM ready, initialize your code:
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOMContentLoaded fired");
-  
-  // Initialize user code and load list from backend.
   initializeUserCodeLoop();
-
-  // Attach event listener for Add Item button
   const addItemButton = document.getElementById("addItemButton");
   addItemButton.addEventListener("click", () => {
     const itemInputEl = document.getElementById("itemInput");
@@ -286,6 +278,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// (Then include your functions: initializeUserCodeLoop, loadUserList, addItemToList, renderGroceryList, storeGroceryList, publishGroceryList, etc.)
+// (Make sure there's only one copy of these functions.)
 
 // Function to initialize or validate the user code using retry logic.
 async function initializeUserCodeLoop() {
