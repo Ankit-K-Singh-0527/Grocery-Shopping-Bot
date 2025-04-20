@@ -256,6 +256,7 @@ const groceryListEl = document.getElementById("groceryList");
 
 // Initialize the app on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("Initializing application...");
   initializeUserCodeLoop();
 
   document.getElementById("addItemButton").addEventListener("click", () => {
