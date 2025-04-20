@@ -66,7 +66,7 @@ app.get("/grocery-list", async (req, res) => {
 
 // /grocery-list POST endpoint: inserts or updates a grocery list record.
 app.post("/grocery-list", async (req, res) => {
-  // Accept either "user_id" or "userId"
+  console.log("POST /grocery-list req.body:", req.body);  // Debug log
   const user_id = req.body.user_id || req.body.userId;
   const items = req.body.items;
   const total_price = req.body.total_price || req.body.totalPrice;
