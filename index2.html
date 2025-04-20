@@ -19,11 +19,9 @@
         transform: translateY(0);
       }
     }
-    
     .animate-fadeInUp {
       animation: fadeInUp 0.8s ease-out both;
     }
-    
     @keyframes pulseSlow {
       0%,
       100% {
@@ -33,46 +31,61 @@
         opacity: 0.8;
       }
     }
-    
     .animate-pulseSlow {
       animation: pulseSlow 2s infinite;
     }
   </style>
 </head>
 
-<body class="bg-gradient-to-br from-gray-800 via-gray-900 to-black text-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gradient-to-br from-gray-800 via-gray-900 to-black text-gray-100 min-h-screen flex flex-col">
   <div class="container mx-auto p-4">
-    <!-- Main App Container arranged in a grid: header full width, other sections in horizontal columns -->
-    <div class="bg-white rounded-xl shadow-2xl p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 transform transition duration-700 hover:scale-105">
-      <!-- Header Section (Full Width) -->
-      <div class="lg:col-span-3 flex flex-col md:flex-row justify-between items-center border-b pb-4">
-        <div class="animate-fadeInUp">
-          <h1 class="text-4xl font-extrabold text-gray-800">Grocery List Collaboration</h1>
-          <p class="text-lg text-gray-600">Your Unique Code: <span id="userCode" class="font-bold text-blue-500"></span></p>
+    <!-- Header Section (Full Width) -->
+    <div class="bg-white rounded-xl shadow-2xl p-8 flex flex-col md:flex-row justify-between items-center border-b pb-4 mb-6 transform transition duration-700 hover:scale-105">
+      <div class="animate-fadeInUp">
+        <h1 class="text-4xl font-extrabold text-gray-800">Grocery List Collaboration</h1>
+        <p class="text-lg text-gray-600">Your Unique Code: <span id="userCode" class="font-bold text-blue-500"></span></p>
+      </div>
+      <div class="mt-4 md:mt-0 animate-fadeInUp">
+        <a href="https://example.com" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold text-indigo-600 hover:text-indigo-800 transition">
+          Visit Our Premium Partner
+        </a>
+      </div>
+    </div>
+
+    <!-- Input Row: Unique Code for Connect & Budget Input -->
+    <div class="flex flex-col md:flex-row gap-6 mb-6">
+      <!-- Unique Code Input for Connect -->
+      <div class="flex-1 bg-white rounded-xl shadow-lg p-6 animate-fadeInUp">
+        <h2 class="text-2xl font-bold text-gray-800 mb-3">Connect with Others</h2>
+        <div class="flex space-x-4">
+          <input id="connectInput" type="text" placeholder="Enter unique code to connect..." class="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:border-blue-500" />
+          <button id="connectButton" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition">
+            Connect
+          </button>
         </div>
-        <div class="mt-4 md:mt-0 animate-fadeInUp">
-          <button id="connectButton" class="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 transition">
-            Connect with Others
+        <p id="connectionStatus" class="text-gray-600 mt-2"></p>
+      </div>
+
+      <!-- Budget Input Box -->
+      <div class="flex-1 bg-white rounded-xl shadow-lg p-6 animate-fadeInUp">
+        <h2 class="text-2xl font-bold text-gray-800 mb-3">Set Budget</h2>
+        <div class="flex space-x-4">
+          <input id="budgetInput" type="number" placeholder="Enter your budget..." class="border border-gray-300 p-2 rounded-md w-full focus:outline-none focus:border-blue-500" />
+          <button id="setBudgetButton" class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition">
+            Set Budget
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- Left Column: Budget & Grocery List -->
+    <!-- Main Grid Row: Grocery List, Updated List, Suggestions -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left Column: Grocery List -->
       <div class="flex flex-col space-y-6 animate-fadeInUp">
-        <!-- Budget & Total Price Box -->
+        <!-- Budget & Total Price Display Box -->
         <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-xl shadow-lg">
-          <p class="text-white text-xl">
-            <strong>Budget:</strong> <span id="budgetDisplay" class="font-medium">Not Set</span>
-          </p>
-          <p class="text-white text-xl mt-2">
-            <strong>Total Price:</strong> <span id="totalPriceDisplay" class="font-medium">$0</span>
-          </p>
-          <!-- Button to Open Budget Modal -->
-          <div class="mt-4">
-            <button id="openBudgetModalButton" class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition">
-              Set Budget
-            </button>
-          </div>
+          <p class="text-white text-xl"><strong>Budget:</strong> <span id="budgetDisplay" class="font-medium">Not Set</span></p>
+          <p class="text-white text-xl mt-2"><strong>Total Price:</strong> <span id="totalPriceDisplay" class="font-medium">$0</span></p>
         </div>
         <!-- Grocery List Box -->
         <div class="bg-white text-gray-800 p-6 rounded-xl shadow-lg">
@@ -104,7 +117,7 @@
         </div>
       </div>
 
-      <!-- Right Column: Suggestions Box (Empty, for future dynamic suggestions) -->
+      <!-- Right Column: Suggestions -->
       <div class="bg-gradient-to-r from-purple-700 to-pink-600 p-6 rounded-xl shadow-xl animate-fadeInUp transform hover:scale-105 transition duration-700">
         <h2 class="text-3xl font-bold mb-4 text-white">Suggestions</h2>
         <p class="text-white text-lg mb-3">Suggestions will be provided here...</p>
@@ -114,13 +127,12 @@
         <p class="mt-4 text-sm italic animate-pulseSlow">Powered by trending suggestions.</p>
       </div>
     </div>
-
-    <!-- Budget Modal -->
+    
+    <!-- Budget Modal (Optional: Can be used if needed) -->
     <div id="budgetModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white p-8 rounded-xl shadow-2xl transform transition duration-500">
         <h2 class="text-2xl font-bold mb-4">Set Your Budget</h2>
-        <input id="budgetInput" type="number" placeholder="Enter your budget..." 
-               class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 mb-4" />
+        <input id="budgetInputModal" type="number" placeholder="Enter your budget..." class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 mb-4" />
         <div class="flex justify-end gap-4">
           <button id="saveBudgetButton" class="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 transition">
             Save
@@ -137,17 +149,19 @@
   <script src="https://cdn.jsdelivr.net/npm/ably/browser/static/ably.min.js"></script>
   <script src="script1.js"></script>
   <script>
-    // JavaScript to handle budget modal
-    const openBudgetModalButton = document.getElementById('openBudgetModalButton');
+    // JavaScript for handling budget modal (if used)
+    const openBudgetModalButton = document.getElementById('setBudgetButton');
     const budgetModal = document.getElementById('budgetModal');
     const closeBudgetButton = document.getElementById('closeBudgetButton');
 
-    openBudgetModalButton.addEventListener('click', () => {
-      budgetModal.classList.remove('hidden');
-    });
-    closeBudgetButton.addEventListener('click', () => {
-      budgetModal.classList.add('hidden');
-    });
+    if (openBudgetModalButton && budgetModal && closeBudgetButton) {
+      openBudgetModalButton.addEventListener('click', () => {
+        budgetModal.classList.remove('hidden');
+      });
+      closeBudgetButton.addEventListener('click', () => {
+        budgetModal.classList.add('hidden');
+      });
+    }
   </script>
 </body>
 
