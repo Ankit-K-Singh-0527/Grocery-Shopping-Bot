@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Grocery Shopping Bot</title>
+    <link rel="icon" type="image/x-icon" href="./resource/favicon.ico">
+    <style>
+        /* Floating animation for grocery items */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Add animation to the image */
+        .animated-image {
+            animation: bounce 2s infinite ease-in-out, hueRotate 5s infinite linear;
+        }
+
+        /* Bounce animation */
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Hue rotation animation for dynamic color change */
+        @keyframes hueRotate {
+            0% {
+                filter: hue-rotate(0deg);
+            }
+            100% {
+                filter: hue-rotate(360deg);
+            }
+        }
+
+        /* Dropdown menu styling */
+        .nav-menu {
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            position: absolute;
+            top: 70px;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            padding: 1rem;
+            z-index: 1000;
+        }
+
+        .nav-menu.show {
+            display: flex; /* Show dropdown when 'show' class is added */
+        }
+
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 5px auto;
+            transition: 0.3s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 animate-[gradient-x_8s_ease-in-out_infinite] flex flex-col text-white">
+    <!-- Navbar Section -->
+    <div class="relative flex justify-between items-center w-full px-4 py-4">
+        <!-- Logo -->
+        <div></div> <!-- Empty space for alignment -->
+
+        <!-- Hamburger Menu Button -->
+        <div id="hamburger" class="hamburger cursor-pointer">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- Dropdown Menu -->
+        <div id="nav-menu" class="nav-menu">
+            <!-- List Generator -->
+            <a href="index2.html" class="cursor-pointer relative group">
+                <div id="" class="w-full text-center py-2 px-4 bg-blue-500 rounded-lg hover:bg-blue-600 transition-transform duration-200">
+                    List Generator
+                </div>
+            </a>
+            <!-- Ingredient Generator -->
+            <a href="ingredient Gen/ingred.html" class="cursor-pointer relative group">
+                <div id="ingredient-image-container" class="w-full text-center py-2 px-4 bg-green-500 rounded-lg hover:bg-green-600 transition-transform duration-200">
+                    Ingredients
+                </div>
+            </a>
+            <!-- Cart -->
+            <a href="cart.html" class="cursor-pointer relative group">
+                <div id="art-container" class="w-full text-center py-2 px-4 bg-yellow-500 rounded-lg hover:bg-yellow-600 transition-transform duration-200">
+                    Cart
+                </div>
+            </a>
+            <!-- Chatbot -->
+            <a href="chatbot/chatbot.html" class="cursor-pointer relative group">
+                <div id="chatbot" class="w-full flex items-center justify-center cursor-pointer group-hover:scale-110 transition-transform duration-300">
+                    <img src="./resource/chatbot.svg" alt="Chatbot" class="w-12 h-12 object-contain animated-image">
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Section -->
+    <div class="relative w-full flex-grow bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 animate-[gradient-y_6s_ease-in-out_infinite]">
+        <!-- Left Animated Grocery Items -->
+        <div class="absolute left-0 top-0 h-full flex flex-col items-center justify-between py-8 animate-[float_4s_ease-in-out_infinite]">
+            <div class="flex flex-col items-center">
+                <img src="./resource/grocerybag.png" alt="Grocery Bag" class="w-16 h-16">
+                <span class="text-white mt-2 text-sm font-semibold">Grocery Bag</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="./resource/apple.png" alt="Apple" class="w-14 h-14">
+                <span class="text-white mt-2 text-sm font-semibold">Apple</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="./resource/bread.png" alt="Bread" class="w-14 h-14">
+                <span class="text-white mt-2 text-sm font-semibold">Bread</span>
+            </div>
+        </div>
+
+        <!-- Right Animated Grocery Items -->
+        <div class="absolute right-0 top-0 h-full flex flex-col items-center justify-between py-8 animate-[float_4s_ease-in-out_infinite] delay-200">
+            <div class="flex flex-col items-center">
+                <img src="./resource/milk.png" alt="Milk" class="w-16 h-16">
+                <span class="text-white mt-2 text-sm font-semibold">Milk</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="./resource/cheese.png" alt="Cheese" class="w-14 h-14">
+                <span class="text-white mt-2 text-sm font-semibold">Cheese</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="./resource/carrot.png" alt="Carrot" class="w-14 h-14">
+                <span class="text-white mt-2 text-sm font-semibold">Carrot</span>
+            </div>
+        </div>
+
+        <!-- Grocery Shopping Box -->
+        <div class="content-box max-w-4xl mx-auto bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 animate-[gradient-x_6s_ease-in-out_infinite] text-white rounded-lg shadow-2xl p-8 mt-16">
+            <h1 class="text-4xl font-bold text-center text-yellow-300">Grocery Shopping Bot</h1>
+            <div class="mt-8">
+                <label for="item" class="block text-lg font-medium text-white">Enter Grocery Item:</label>
+                <input id="item" type="text" placeholder="e.g., Milk, Bread, Eggs" 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg mt-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white placeholder-white focus:outline-none focus:ring-4 focus:ring-purple-300 transition duration-200 hover:scale-105 hover:shadow-lg">
+            </div>
+            <div class="mt-4 flex justify-between">
+                <button onclick="fetchAndRenderGrocery()" 
+                    class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 hover:scale-105 transition-transform duration-200">Search</button>
+                <button onclick="clearResults()" 
+                    class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 hover:scale-105 transition-transform duration-200">Clear</button>
+            </div>
+            <div id="result" class="mt-6"></div>
+            <button onclick="getPersonalizedListFromAPI()" 
+                class="bg-gradient-to-r from-green-400 via-blue-500 to-indigo-500 text-white px-6 py-3 rounded-lg hover:scale-105 transition-transform mt-6 w-full">
+                Get Personalized List
+            </button>
+        </div>
+    </div>
+    
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed top-0 left-0 w-full flex justify-center z-50 pointer-events-none"></div>
+    
+    <script>
+        const hamburger = document.getElementById("hamburger");
+        const navMenu = document.getElementById("nav-menu");
+
+        // Toggle the dropdown menu visibility
+        hamburger.addEventListener("click", () => {
+            navMenu.classList.toggle("show");
+        });
+
+        // Hide dropdown if clicking outside
+        document.addEventListener("click", (event) => {
+            if (!navMenu.contains(event.target) && !hamburger.contains(event.target)) {
+                navMenu.classList.remove("show");
+            }
+        });
+
+    </script>
+    `
+</body>
+</html>

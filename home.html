@@ -16,59 +16,177 @@
                 transform: translateY(-10px);
             }
         }
-         /* Add animation to the image */
-    .animated-image {
-        animation: bounce 2s infinite ease-in-out, hueRotate 5s infinite linear;
-    }
 
-    /* Bounce animation */
-    @keyframes bounce {
-        0%, 100% {
-            transform: translateY(0);
+        /* Add animation to the image */
+        .animated-image {
+            animation: bounce 2s infinite ease-in-out, hueRotate 5s infinite linear;
         }
-        50% {
-            transform: translateY(-10px);
-        }
-    }
 
-    /* Hue rotation animation for dynamic color change */
-    @keyframes hueRotate {
-        0% {
-            filter: hue-rotate(0deg);
+        /* Bounce animation */
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
         }
-        100% {
-            filter: hue-rotate(360deg);
+
+        /* Hue rotation animation for dynamic color change */
+        @keyframes hueRotate {
+            0% {
+                filter: hue-rotate(0deg);
+            }
+            100% {
+                filter: hue-rotate(360deg);
+            }
         }
-    }
+
+        /* Dropdown menu styling */
+        .nav-menu {
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            position: absolute;
+            top: 70px;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            padding: 1rem;
+            z-index: 1000;
+        }
+
+        .nav-menu.show {
+            display: flex; /* Show dropdown when 'show' class is added */
+        }
+
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 5px auto;
+            transition: 0.3s ease;
+        }
+
+        /* Trending Products Section */
+        .trending-section {
+            background: linear-gradient(to bottom, #ffe4b5, #e6e6fa);
+            padding: 4rem 2rem;
+            color: #2d3748;
+        }
+
+        .trending-card {
+            background: linear-gradient(to top right, #ff7e5f, #feb47b);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .trending-card:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Customer Reviews Section */
+        .customer-reviews {
+            background: linear-gradient(to right, #fbc2eb, #a6c1ee);
+            padding: 4rem 2rem;
+            color: #333;
+        }
+
+        .review-card {
+            background: linear-gradient(to bottom, #6a11cb, #2575fc);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .review-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .add-review {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .add-review input {
+            width: 80%;
+            max-width: 500px;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .add-review button {
+            padding: 0.75rem 1.5rem;
+            background: #6a11cb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .add-review button:hover {
+            background: #2575fc;
+        }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 animate-[gradient-x_8s_ease-in-out_infinite] flex flex-col text-white">
+<body class="min-h-screen bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 flex flex-col text-white">
     <!-- Navbar Section -->
-    <div class="relative flex justify-end items-center w-full px-4 py-4">
-        <a href="index2.html" class="cursor-pointer relative group mx-4">
-            <div id="" class="w-16 h-16 flex items-center justify-center cursor-pointer group-hover:scale-110 transition-transform duration-300">
-                <img src="./resource/listCreate.svg" alt="Ingredient Generator" class="w-full h-full object-contain animated-image">
-            </div>
-        </a>    
-        <!-- Ingredient Generator Image -->
-    <a href="ingredient Gen/ingred.html" class="cursor-pointer relative group mx-4">
-        <div id="ingredient-image-container" class="w-16 h-16 flex items-center justify-center cursor-pointer group-hover:scale-110 transition-transform duration-300">
-            <img src="./resource/list.png" alt="Ingredient Generator" class="w-full h-full object-contain animated-image">
-        </div>
-    </a>
-        <!-- Cart icon -->
-        <a href="cart.html" class="cursor-pointer relative group">
-            <div id="cart-container" class="w-12 h-12 flex items-center justify-center cursor-pointer group-hover:scale-110 transition-transform duration-300">
-                
+<div class="relative flex justify-between items-center w-full px-4 py-4 bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-400 animate-[gradient-x_5s_ease-in-out_infinite] text-white shadow-lg">
+    <!-- Logo Placeholder -->
+    <div class="text-2xl font-extrabold">GroceryBot</div>
+
+    <!-- Hamburger Menu Button -->
+    <div id="hamburger" class="hamburger cursor-pointer">
+        <span class="block w-6 h-1 bg-white rounded-full mb-1 transition-all duration-300"></span>
+        <span class="block w-6 h-1 bg-white rounded-full mb-1 transition-all duration-300"></span>
+        <span class="block w-6 h-1 bg-white rounded-full transition-all duration-300"></span>
+    </div>
+
+    <!-- Dropdown Menu -->
+    <div id="nav-menu" class="nav-menu bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-lg shadow-lg">
+        <!-- List Generator -->
+        <a href="index2.html" class="cursor-pointer relative group hover:scale-105 transition-transform duration-200">
+            <div class="w-full text-center py-2 px-4 bg-blue-500 rounded-lg hover:bg-blue-600 transition-transform duration-200">
+                List Generator
             </div>
         </a>
-            <!-- Chatbot icon -->
-         <a href="chatbot/chatbot.html" class="cursor-pointer relative group">
-            <div id="chatbot" class="w-12 h-12 flex items-center justify-center cursor-pointer group-hover:scale-110 transition-transform duration-300">
-                <img src="./resource/chatbot.svg" alt="Ingredient Generator" class="w-full h-full object-contain animated-image">
+        <!-- Ingredient Generator -->
+        <a href="ingredient Gen/ingred.html" class="cursor-pointer relative group hover:scale-105 transition-transform duration-200">
+            <div class="w-full text-center py-2 px-4 bg-green-500 rounded-lg hover:bg-green-600 transition-transform duration-200">
+                Ingredients
+            </div>
+        </a>
+        <!-- Cart -->
+        <a href="cart.html" class="cursor-pointer relative group hover:scale-105 transition-transform duration-200">
+            <div class="w-full text-center py-2 px-4 bg-yellow-500 rounded-lg hover:bg-yellow-600 transition-transform duration-200">
+                Cart
+            </div>
+        </a>
+        <!-- Chatbot -->
+        <a href="chatbot/chatbot.html" class="cursor-pointer relative group hover:scale-105 transition-transform duration-200">
+            <div class="w-full flex items-center justify-center cursor-pointer group-hover:scale-110 transition-transform duration-300">
+                <img src="./resource/chatbot.svg" alt="Chatbot" class="w-12 h-12 object-contain animated-image">
             </div>
         </a>
     </div>
+</div>
 
     <!-- Main Content Section -->
     <div class="relative w-full flex-grow bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 animate-[gradient-y_6s_ease-in-out_infinite]">
@@ -125,15 +243,177 @@
             </button>
         </div>
     </div>
-    
-    <!-- Notification Container -->
-    <div id="notification-container" class="fixed top-0 left-0 w-full flex justify-center z-50 pointer-events-none"></div>
-    
-    <!-- Scroll-to-Top Button -->
-    <button onclick="scrollToTop()" 
-        class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-4 rounded-full shadow-lg transition hover:scale-110">
-        ⬆️
-    </button>
+
+    <!-- Trending Products Section -->
+<section class="trending-section">
+    <h2 class="text-4xl font-bold text-center mb-8">Trending Products</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="trending-card hover:scale-105 hover:bg-gradient-to-br from-yellow-300 to-orange-400 transition duration-300 ease-in-out">
+            <p class="text-xl font-semibold">Organic Bananas</p>
+            <p class="text-sm mt-2">Fresh and naturally ripened bananas for a healthy lifestyle.</p>
+        </div>
+        <div class="trending-card hover:scale-105 hover:bg-gradient-to-br from-purple-300 to-indigo-400 transition duration-300 ease-in-out">
+            <p class="text-xl font-semibold">Premium Coffee</p>
+            <p class="text-sm mt-2">Rich, aromatic coffee beans for the perfect brew.</p>
+        </div>
+        <div class="trending-card hover:scale-105 hover:bg-gradient-to-br from-green-300 to-teal-400 transition duration-300 ease-in-out">
+            <p class="text-xl font-semibold">Farm Fresh Eggs</p>
+            <p class="text-sm mt-2">Free-range eggs, packed with nutrition and taste.</p>
+        </div>
+    </div>
+</section>
+
+    <!-- Customer Reviews Section -->
+<section class="customer-reviews">
+    <h2 class="text-4xl font-bold text-center">Customer Reviews</h2>
+    <div id="reviews-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+        <div class="review-card hover:animate-bounce transition duration-500 ease-in-out">"This is the best grocery shopping experience I've had!"</div>
+        <div class="review-card hover:animate-bounce transition duration-500 ease-in-out">"I love how fresh and clean their products are!"</div>
+        <div class="review-card hover:animate-bounce transition duration-500 ease-in-out">"Their support team is very responsive!"</div>
+        <div class="review-card hover:animate-bounce transition duration-500 ease-in-out">"Fast delivery and excellent quality products!"</div>
+    </div>
+
+    <!-- Add Review Form -->
+    <div class="add-review">
+        <input id="review-input" type="text" placeholder="Write your review here..." />
+        <button onclick="addReview()">Add Review</button>
+    </div>
+</section>
+
+<!-- Exclusive Offers Section -->
+<section class="exclusive-offers py-16 px-8 bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200">
+    <h2 class="text-4xl font-bold text-center text-gray-800 mb-8">Exclusive Offers</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="offer-card p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 bg-gradient-to-br from-red-400 to-orange-400 text-white">
+            <h3 class="text-2xl font-semibold">Buy 1 Get 1 Free</h3>
+            <p class="text-sm mt-2">On all organic vegetables. Limited time offer!</p>
+        </div>
+        <div class="offer-card p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 bg-gradient-to-br from-blue-400 to-indigo-400 text-white">
+            <h3 class="text-2xl font-semibold">20% Off</h3>
+            <p class="text-sm mt-2">On premium coffee beans. Grab your deal now!</p>
+        </div>
+        <div class="offer-card p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 bg-gradient-to-br from-green-400 to-teal-400 text-white">
+            <h3 class="text-2xl font-semibold">Free Delivery</h3>
+            <p class="text-sm mt-2">On orders above $50. Save more with us!</p>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Us Section -->
+<section class="contact-us py-16 px-8 bg-gradient-to-r from-purple-200 via-pink-200 to-yellow-200">
+    <h2 class="text-4xl font-bold text-center text-gray-800 mb-8">Contact Us</h2>
+    <div class="max-w-4xl mx-auto bg-gradient-to-br from-white to-gray-100 p-8 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300">
+        <form id="contact-form" onsubmit="showPopup(event)">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Name Field -->
+                <div>
+                    <label for="name" class="block text-lg font-semibold text-gray-700">Your Name</label>
+                    <input id="name" name="name" type="text" placeholder="Enter your name" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-md mt-2 bg-gradient-to-br from-gray-50 to-gray-100 placeholder-gray-600 focus:outline-none focus:ring-4 focus:ring-purple-500 hover:ring-2 hover:ring-purple-300 transition duration-200 text-gray-800">
+                </div>
+                <!-- Email Field -->
+                <div>
+                    <label for="email" class="block text-lg font-semibold text-gray-700">Your Email</label>
+                    <input id="email" name="email" type="email" placeholder="Enter your email" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-md mt-2 bg-gradient-to-br from-gray-50 to-gray-100 placeholder-gray-600 focus:outline-none focus:ring-4 focus:ring-purple-500 hover:ring-2 hover:ring-purple-300 transition duration-200 text-gray-800">
+                </div>
+            </div>
+            <!-- Message Field -->
+            <div class="mt-4">
+                <label for="message" class="block text-lg font-semibold text-gray-700">Your Message</label>
+                <textarea id="message" name="message" rows="5" placeholder="Write your message here..." 
+                          class="w-full px-4 py-3 border border-gray-300 rounded-md mt-2 bg-gradient-to-br from-gray-50 to-gray-100 placeholder-gray-600 focus:outline-none focus:ring-4 focus:ring-purple-500 hover:ring-2 hover:ring-purple-300 transition duration-200 text-gray-800"></textarea>
+            </div>
+            <!-- Submit Button -->
+            <div class="mt-6 flex justify-center">
+                <button type="submit" 
+                        class="bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 text-white px-6 py-3 rounded-lg hover:scale-105 hover:bg-gradient-to-br transition-transform duration-300 shadow-lg">
+                    Send Message
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Popup Modal -->
+    <div id="popup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg text-center w-80">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Thank You!</h3>
+            <p class="text-gray-700">Your message has been successfully submitted.</p>
+            <button onclick="closePopup()" class="mt-4 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 text-white px-4 py-2 rounded-lg hover:scale-105 transition-transform duration-300">
+                Close
+            </button>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Function to show the popup
+    function showPopup(event) {
+        event.preventDefault(); // Prevents the form from reloading the page
+        document.getElementById('popup').classList.remove('hidden');
+    }
+
+    // Function to close the popup
+    function closePopup() {
+        document.getElementById('popup').classList.add('hidden');
+    }
+</script>
+
+<script>
+    // Add Review functionality
+    function addReview() {
+        const reviewInput = document.getElementById("review-input");
+        const reviewsContainer = document.getElementById("reviews-container");
+
+        const reviewText = reviewInput.value.trim();
+        if (reviewText !== "") {
+            // Create a new review card
+            const newReview = document.createElement("div");
+            newReview.classList.add("review-card", "hover:animate-bounce", "transition", "duration-500", "ease-in-out");
+            newReview.textContent = reviewText;
+
+            // Append the new review to the reviews container
+            reviewsContainer.appendChild(newReview);
+
+            // Clear the input field
+            reviewInput.value = "";
+        } else {
+            alert("Please enter a review before submitting.");
+        }
+    }
+</script>
+
+    <script>
+        // Dropdown functionality
+        const hamburger = document.getElementById("hamburger");
+        const navMenu = document.getElementById("nav-menu");
+
+        hamburger.addEventListener("click", () => {
+            navMenu.classList.toggle("show");
+        });
+
+        // Add Review functionality
+        function addReview() {
+            const reviewInput = document.getElementById("review-input");
+            const reviewsContainer = document.getElementById("reviews-container");
+
+            const reviewText = reviewInput.value.trim();
+            if (reviewText !== "") {
+                // Create a new review card
+                const newReview = document.createElement("div");
+                newReview.classList.add("review-card");
+                newReview.textContent = reviewText;
+
+                // Append the new review to the reviews container
+                reviewsContainer.appendChild(newReview);
+
+                // Clear the input field
+                reviewInput.value = "";
+            } else {
+                alert("Please enter a review before submitting.");
+            }
+        }
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
